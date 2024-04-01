@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "name": "FL API",
+      "path": "./fl-api"
+    },
+    {
+      "name": "FL Client",
+      "path": "./fl-client"
+    },
+    {
+      "name": "Root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "fl-api": true,
+      "fl-client": true
+    }
+  }
+}
