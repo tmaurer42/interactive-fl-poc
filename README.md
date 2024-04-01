@@ -25,7 +25,7 @@ docker compose -f docker-compose.yml up --build
 docker compose -f docker-compose.debug.yml up --build
 ```
 
-- Attach the debugger for the by selecting "API: Attach" in the VSCode Debug section. The API will start as soon as the debugger is attached
+- Attach the debugger for the API by selecting "API: Attach" in the VSCode Debug section. The API will start as soon as the debugger is attached.
 
 The API will be available at port **5002**.
 
