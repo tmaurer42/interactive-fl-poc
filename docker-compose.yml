@@ -8,3 +8,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - 5002:5002
+  fl-client:
+    image: fl-client
+    build:
+      context: ./fl-client
+      dockerfile: Dockerfile
+    ports:
+      - 4002:4002

@@ -1,0 +1,51 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Client: Debug",
+      "type": "docker",
+      "request": "launch",
+      "preLaunchTask": "docker-run: debug",
+      "python": {
+        "pathMappings": [
+          {
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/app"
+          }
+        ],
+        "projectType": "flask"
+      },
+      "dockerServerReadyAction": {
+        "action": "none",
+        "pattern": "Running on (http?://\\S+|[0-9]+)",
+        "uriFormat": "%s://localhost:%s/"
+      }
+    },
+    {
+      "name": "Client: Test Debug",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "stopOnEntry": false,
+      "cwd": "${workspaceFolder}",
+    },
+    {
+      "name": "Client: Attach",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 6789
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "/app"
+        }
+      ]
+    }
+  ]
+}

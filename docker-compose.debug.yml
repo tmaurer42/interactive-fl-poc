@@ -23,3 +23,25 @@ services:
       - FLASK_ENV=development
     volumes:
       - ./fl-api:/app
+  fl-client:
+    image: fl-client
+    build:
+      context: ./fl-client
+      dockerfile: Dockerfile
+    command:
+      - sh
+      - -c
+      - |
+        pip install debugpy -t /tmp && 
+        python /tmp/debugpy \
+        --wait-for-client \
+        --listen 0.0.0.0:6789 \
+        -m flask run --no-debugger --host 0.0.0.0 --port 4002
+    ports:
+      - 4002:4002
+      - 6789:6789
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+    volumes:
+      - ./fl-client:/app
