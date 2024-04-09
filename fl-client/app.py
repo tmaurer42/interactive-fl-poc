@@ -1,15 +1,17 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template
 
 
 app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+
+def render_template_by_name(name, **kwargs):
+    return render_template(f'{name}/{name}.html', **kwargs)
 
 
 @app.route('/')
 def index():
-    return render_template_string('''
-    <h1>Flask App</h1>     
-    <p>Visit <a href="/hello">/hello</a> to see the greeting.</p>
-    ''')
+    return render_template_by_name('index')
 
 
 @app.route('/hello')
