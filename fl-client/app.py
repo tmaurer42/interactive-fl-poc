@@ -1,22 +1,23 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_from_directory
 
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 
-def render_template_by_name(name, **kwargs):
-    return render_template(f'{name}/{name}.html', **kwargs)
-
-
 @app.route('/')
 def index():
-    return render_template_by_name('index')
+    return render_template('index.html')
 
 
 @app.route('/hello')
 def hello():
     return 'Hello, World!'
+
+
+@app.route('/static/<path:path>')
+def send_static(path):
+    return send_from_directory('static', path)
 
 
 port = 4002

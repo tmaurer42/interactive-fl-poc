@@ -2,6 +2,15 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "yarn build",
+      "type": "shell",
+      "command": "yarn build",
+      "group": {
+          "kind": "build",
+          "isDefault": true
+      }
+    },
+    {
       "type": "docker-build",
       "label": "docker-build",
       "platform": "python",
@@ -10,7 +19,8 @@
         "dockerfile": "${workspaceFolder}/Dockerfile",
         "context": "${workspaceFolder}",
         "pull": true
-      }
+      },
+      "dependsOn": ["yarn build"],
     },
     {
       "type": "docker-run",
