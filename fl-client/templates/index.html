@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
-   <p>My page content goes here</p>
    <div class="block">
-     <a class="button is-primary" onclick="logFoo()">Log Foo!</a>
+      <a class="button is-primary" onclick="ensureOnnxRuntime()">Test inference session!</a>
    </div>
+   <div class="block">
+      <p>See console for result.</p>
+    </div>
 {% endblock %}

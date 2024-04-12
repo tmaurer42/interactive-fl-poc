@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
     entry: path.resolve(__dirname, 'src/index.ts'),
@@ -16,11 +17,19 @@ module.exports = {
     },
     output: {
         filename: 'index.js',
-        path: path.resolve(__dirname, 'static/dist/js'),
+        path: path.resolve(__dirname, 'static/dist'),
         library: {
             type: 'umd'
         },
         sourceMapFilename: '[file].map',
     },
+    plugins: [
+        new CopyPlugin({
+            patterns: [
+                './node_modules/onnxruntime-web/dist/ort-wasm.wasm',       
+                './node_modules/onnxruntime-web/dist/ort-wasm-simd.wasm',
+            ]
+        })
+    ],
     devtool: 'source-map'
 }
