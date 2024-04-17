@@ -6,6 +6,7 @@
     "strict": true, // Enables a wide range of type checking behavior that results in stronger guarantees of program correctness.
     "moduleResolution": "Bundler", // This helps TypeScript understand modules in the Node.js style.
     "esModuleInterop": true, // Allows default imports from modules with no default export.
-    "sourceMap": true // Generates corresponding '.map' file for debugging purposes.
+    "sourceMap": true, // Generates corresponding '.map' file for debugging purposes.
+    "types": ["@webgpu/types"] // This is a custom type definition for WebGPU.
   }
 }

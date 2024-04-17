@@ -45,6 +45,15 @@ const preprocessImageSqueezeNet = (
 	return new Tensor("float32", data, [1, 3, targetSize, targetSize]);
 };
 
+function getExecutionProviders() {
+	// check if browser supports webgpu
+	if (navigator.gpu) {
+		return ["webgpu"];
+	}
+
+	return undefined;
+}
+
 export const runInference = async (imageElement: HTMLImageElement) => {
 	const model = await fetchModel("/static/models/SqueezeNet/model.onnx");
 	const classes = await fetchClasses("/static/classes/imagenet.json");
@@ -52,7 +61,10 @@ export const runInference = async (imageElement: HTMLImageElement) => {
 	const imageTensor = preprocessImageSqueezeNet(imageElement);
 	console.log("Image processed");
 
-	const session = await InferenceSession.create(model);
+	const executionProviders = getExecutionProviders();
+	const session = await InferenceSession.create(model, {
+		executionProviders,
+	});
 	const feedsName = session.inputNames[0];
 	const feeds = { [feedsName]: imageTensor };
 	const outputData = await session.run(feeds);
