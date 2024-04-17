@@ -1,28 +1,35 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>FL POC</title>
-        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/bulma.min.css') }}">
-    </head>
-    <body>
-        <section class="section">
-            <div class="container">
-                <h1 class="title">
-                    This is my FL POC client app!
-                </h1>
-                <p class="subtitle">
-                    It's gonna be <strong>great</strong>! 
-                </p>
-                
-            </div>
-        </section>
-        <section class="section">
-            <div class="container">
-                {% block content %}{% endblock %}
-            </div>
-        </section>
-        <script type="module" src="{{ url_for('static',filename='dist/index.js') }}"></script>
-    </body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FL POC</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static',filename='styles/bulma.min.css') }}"
+    />
+  </head>
+  <body>
+    <script>
+      0;
+    </script>
+    <section class="section">
+      <div class="container">
+        <h1 class="title">This is my FL POC client app!</h1>
+        <p class="subtitle">It's gonna be <strong>great</strong>!</p>
+        <div class="tabs">
+          <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('inference') }}">Inference</a></li>
+          </ul>
+        </div>
+      </div>
+      {% block content %}{% endblock %}
+    </section>
+    <script
+      type="module"
+      src="{{ url_for('static',filename='dist/index.js') }}"
+    ></script>
+  </body>
 </html>

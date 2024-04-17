@@ -1,5 +1,7 @@
-import {configureOrt} from './ortConfig'
+import { configureOrt } from "./ortConfig";
+import { registerComponents } from "./components";
 
-configureOrt()
+configureOrt();
+registerComponents();
 
-export * from './modules'
+export * from "./modules";

@@ -10,6 +10,11 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/inference')
+def inference():
+    return render_template('inference.html')
+
+
 @app.route('/hello')
 def hello():
     return 'Hello, World!'

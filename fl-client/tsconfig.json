@@ -1,7 +1,7 @@
 {
   "include": ["./src/**/*"],
   "compilerOptions": {
-    "target": "ES5", // ES5 is widely supported by all browsers.
+    "target": "ES6", // ES5 is widely supported by all browsers.
     "module": "ES2015", // SystemJS is a universal dynamic module loader, it will work in the browser.
     "strict": true, // Enables a wide range of type checking behavior that results in stronger guarantees of program correctness.
     "moduleResolution": "Bundler", // This helps TypeScript understand modules in the Node.js style.

@@ -26,8 +26,7 @@ module.exports = {
     plugins: [
         new CopyPlugin({
             patterns: [
-                './node_modules/onnxruntime-web/dist/ort-wasm.wasm',       
-                './node_modules/onnxruntime-web/dist/ort-wasm-simd.wasm',
+                { from: './node_modules/onnxruntime-web/dist/*.wasm', to: '[name][ext]' },
             ]
         })
     ],

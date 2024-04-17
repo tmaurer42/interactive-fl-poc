@@ -1,4 +1,12 @@
 {
-    "editor.defaultFormatter": "ms-python.autopep8",
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 4,
+    "prettier.useTabs": true,
+    "prettier.tabWidth": 4
+  }
 }

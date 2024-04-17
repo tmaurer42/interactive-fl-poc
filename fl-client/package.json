@@ -4,7 +4,8 @@
   "author": "Tim Maurer",
   "license": "MIT",
   "scripts": {
-    "build": "webpack --config webpack.config.js --mode production"
+    "build": "webpack --config webpack.config.js --mode production",
+    "watch": "webpack --config webpack.config.js --mode development --watch"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^12.0.2",
@@ -14,6 +15,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "jimp": "^0.22.12",
     "onnxruntime-web": "^1.17.1"
   }
 }
