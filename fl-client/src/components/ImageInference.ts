@@ -88,7 +88,8 @@ export class ImageInferenceElement extends HTMLElement {
 
 	displayResult(result: Array<{ label: string; probability: number }>) {
 		const resultContainer = this.querySelector(`#${this.resultId}`);
-		resultContainer!.innerHTML = "<h5 class='title is-5'>Results</h5>";
+		resultContainer!.innerHTML =
+			"<h5 class='title is-5'>Top 5 Results</h5>";
 
 		result.forEach((item, i) => {
 			const label = document.createElement("p");

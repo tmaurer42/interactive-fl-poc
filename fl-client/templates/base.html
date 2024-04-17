@@ -20,8 +20,16 @@
         <p class="subtitle">It's gonna be <strong>great</strong>!</p>
         <div class="tabs">
           <ul>
-            <li><a href="{{ url_for('index') }}">Home</a></li>
-            <li><a href="{{ url_for('inference') }}">Inference</a></li>
+            <li
+              class="{{ 'is-active' if request.path == url_for('index') else '' }}"
+            >
+              <a href="{{ url_for('index') }}">Home</a>
+            </li>
+            <li
+              class="{{ 'is-active' if request.path == url_for('inference') else '' }}"
+            >
+              <a href="{{ url_for('inference') }}">Inference</a>
+            </li>
           </ul>
         </div>
       </div>
