@@ -18,7 +18,7 @@
       <div class="container">
         <h1 class="title">This is my FL POC client app!</h1>
         <p class="subtitle">It's gonna be <strong>great</strong>!</p>
-        <div class="tabs">
+        <nav class="tabs">
           <ul>
             <li
               class="{{ 'is-active' if request.path == url_for('index') else '' }}"
@@ -31,7 +31,7 @@
               <a href="{{ url_for('inference') }}">Inference</a>
             </li>
           </ul>
-        </div>
+        </nav>
       </div>
       {% block content %}{% endblock %}
     </section>

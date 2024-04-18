@@ -1,10 +1,11 @@
 import { runInference } from "..";
 
 export class ImageInferenceElement extends HTMLElement {
-	inputId = "inference-input";
-	submitId = "inference-submit";
-	imageId = "inference-image";
-	resultId = "inference-result";
+	idSuffix = Date.now().toString(36);
+	inputId = `inference-input-${this.idSuffix}`;
+	submitId = `inference-submit-${this.idSuffix}`;
+	imageId = `inference-image-${this.idSuffix}`;
+	resultId = `inference-result-${this.idSuffix}`;
 
 	constructor() {
 		super();
@@ -20,7 +21,7 @@ export class ImageInferenceElement extends HTMLElement {
             <div class="columns">
                 <div class="column is-half">
                     <div class="block">
-                        <label class="label">Upload Image</label>
+                        <label class="label">Select an Image</label>
                         <div class="control">
                             <input class="input" type="file" name="image" accept="image/*" id="${this.inputId}" autocomplete="off">
                         </div>
