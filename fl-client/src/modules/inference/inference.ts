@@ -11,12 +11,6 @@ const fetchClasses = async (classesUrl: string) => {
 	return (await response.json()) as string[];
 };
 
-/**
- * Preprocesses an image element by resizing and normalizing pixel values.
- * @param {HTMLImageElement} imgElement - An image element to preprocess.
- * @param {number} targetSize - The size to which the image is to be resized (e.g., 224 for MobileNet).
- * @returns {ImageData} The resized and normalized image data.
- */
 const preprocessImageSqueezeNet = (
 	imgElement: HTMLImageElement,
 	targetSize: number = 224
@@ -45,6 +39,53 @@ const preprocessImageSqueezeNet = (
 	return new Tensor("float32", data, [1, 3, targetSize, targetSize]);
 };
 
+const preprocessImageMobileNet = (
+	imgElement: HTMLImageElement,
+	targetSize: number = 224
+): Tensor => {
+	const canvas = document.createElement("canvas");
+	canvas.width = targetSize;
+	canvas.height = targetSize;
+
+	const ctx = canvas.getContext("2d");
+
+	if (!ctx) {
+		throw new Error("Could not create canvas 2d context");
+	}
+
+	ctx.drawImage(imgElement, 0, 0, targetSize, targetSize);
+
+	const imageData = ctx.getImageData(0, 0, targetSize, targetSize);
+	const data = new Float32Array(targetSize * targetSize * 3);
+
+	for (let i = 0; i < targetSize * targetSize; i++) {
+		data[i] = imageData.data[i * 4] / 127.5 - 1;
+		data[i + targetSize * targetSize] =
+			imageData.data[i * 4 + 1] / 127.5 - 1;
+		data[i + targetSize * targetSize * 2] =
+			imageData.data[i * 4 + 2] / 127.5 - 1;
+	}
+
+	return new Tensor("float32", data, [1, 3, targetSize, targetSize]);
+};
+
+type SupportedModel = "SqueezeNet" | "MobileNet";
+
+function preprocessImage(
+	imgElement: HTMLImageElement,
+	modelName: SupportedModel,
+	targetSize: number = 224
+): Tensor {
+	switch (modelName) {
+		case "SqueezeNet":
+			return preprocessImageSqueezeNet(imgElement, targetSize);
+		case "MobileNet":
+			return preprocessImageMobileNet(imgElement, targetSize);
+		default:
+			throw new Error(`Model ${modelName} not supported`);
+	}
+}
+
 function getExecutionProviders() {
 	// check if browser supports webgpu
 	if (navigator.gpu) {
@@ -54,19 +95,22 @@ function getExecutionProviders() {
 	return undefined;
 }
 
-export const runInference = async (imageElement: HTMLImageElement) => {
-	const model = await fetchModel("/static/models/SqueezeNet/model.onnx");
+export const runInference = async (
+	imageElement: HTMLImageElement,
+	modelName: "SqueezeNet" | "MobileNet" = "SqueezeNet"
+) => {
+	const model = await fetchModel(`/static/models/${modelName}/model.onnx`);
 	const classes = await fetchClasses("/static/classes/imagenet.json");
 
-	const imageTensor = preprocessImageSqueezeNet(imageElement);
+	const imageTensor = preprocessImage(imageElement, modelName);
 	console.log("Image processed");
 
 	const executionProviders = getExecutionProviders();
 	const session = await InferenceSession.create(model, {
 		executionProviders,
 	});
-	const feedsName = session.inputNames[0];
-	const feeds = { [feedsName]: imageTensor };
+	const inputName = session.inputNames[0];
+	const feeds = { [inputName]: imageTensor };
 	const outputData = await session.run(feeds);
 
 	// Get output results with the output name from the model export.

@@ -82,7 +82,7 @@ export class ImageInferenceElement extends HTMLElement {
 			`#${this.imageId}`
 		) as HTMLImageElement;
 
-		const result = await runInference(imageElement);
+		const result = await runInference(imageElement, 'MobileNet');
 
 		this.displayResult(result);
 	};
