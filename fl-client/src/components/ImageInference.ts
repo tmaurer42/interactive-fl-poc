@@ -1,6 +1,10 @@
 import { runInference } from "..";
 
 export class ImageInferenceElement extends HTMLElement {
+	/*
+	 * Since this component does not use a shadow DOM, we need to ensure that
+	 * the IDs are unique across all instances of this component.
+	 */
 	idSuffix = Date.now().toString(36);
 	inputId = `inference-input-${this.idSuffix}`;
 	submitId = `inference-submit-${this.idSuffix}`;
@@ -17,30 +21,30 @@ export class ImageInferenceElement extends HTMLElement {
 	}
 
 	render() {
-		this.innerHTML = `
-            <div class="columns">
-                <div class="column is-half">
-                    <div class="block">
-                        <label class="label">Select an Image</label>
-                        <div class="control">
-                            <input class="input" type="file" name="image" accept="image/*" id="${this.inputId}" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="block">
-                        <div class="control">
-                            <button class="button is-primary" id="${this.submitId}" disabled type="submit">Run Inference!</button>
-                        </div>
-                    </div>
-                    <div class="block">
-                        <div id="${this.resultId}"></div>
-                    </div>
-                </div>
-                <div class="column is-half">
-                    <figure class="image" id="image-preview">
-                        <img id="${this.imageId}" src="" alt="">
-                    </figure>
-                </div>
-            </div>
+		this.innerHTML = /*html*/`
+			<div class="columns">
+				<div class="column is-half">
+					<div class="block">
+						<label class="label">Select an Image</label>
+						<div class="control">
+							<input class="input" type="file" name="image" accept="image/*" id="${this.inputId}" autocomplete="off">
+						</div>
+					</div>
+					<div class="block">
+						<div class="control">
+							<button class="button is-primary" id="${this.submitId}" disabled type="submit">Run Inference!</button>
+						</div>
+					</div>
+					<div class="block">
+						<div id="${this.resultId}"></div>
+					</div>
+				</div>
+				<div class="column is-half">
+					<figure class="image" id="image-preview">
+						<img id="${this.imageId}" src="" alt="">
+					</figure>
+				</div>
+			</div>
         `;
 	}
 
@@ -82,15 +86,20 @@ export class ImageInferenceElement extends HTMLElement {
 			`#${this.imageId}`
 		) as HTMLImageElement;
 
-		const result = await runInference(imageElement, 'MobileNet');
+		const result = await runInference(imageElement, "MobileNet");
 
 		this.displayResult(result);
 	};
 
-	displayResult(result: Array<{ label: string; probability: number }>) {
+	displayResult(
+		result: Array<{
+			label: string;
+			probability: number;
+		}>
+	) {
 		const resultContainer = this.querySelector(`#${this.resultId}`);
 		resultContainer!.innerHTML =
-			"<h5 class='title is-5'>Top 5 Results</h5>";
+			/*html*/`<h5 class='title is-5'>Top 5 Results</h5>`;
 
 		result.forEach((item, i) => {
 			const label = document.createElement("p");

@@ -1,4 +1,5 @@
 import { InferenceSession, Tensor } from "onnxruntime-web";
+import { InferenceSession as WebGPUInferenceSession } from "onnxruntime-web/webgpu";
 
 const fetchModel = async (modelUrl: string) => {
 	const response = await fetch(modelUrl);
@@ -86,13 +87,14 @@ function preprocessImage(
 	}
 }
 
-function getExecutionProviders() {
-	// check if browser supports webgpu
-	if (navigator.gpu) {
-		return ["webgpu"];
-	}
+async function createInferenceSession(model: ArrayBuffer) {
+	const supportsWebGPU = Boolean(navigator.gpu)
 
-	return undefined;
+	const executionProviders = supportsWebGPU ? ['webgpu'] : undefined;
+	
+	return supportsWebGPU
+		? await WebGPUInferenceSession.create(model, { executionProviders })
+		: await InferenceSession.create(model, { executionProviders });
 }
 
 export const runInference = async (
@@ -105,10 +107,7 @@ export const runInference = async (
 	const imageTensor = preprocessImage(imageElement, modelName);
 	console.log("Image processed");
 
-	const executionProviders = getExecutionProviders();
-	const session = await InferenceSession.create(model, {
-		executionProviders,
-	});
+	const session = await createInferenceSession(model);
 	const inputName = session.inputNames[0];
 	const feeds = { [inputName]: imageTensor };
 	const outputData = await session.run(feeds);
