@@ -1,5 +1,8 @@
-import { InferenceSession, Tensor } from "onnxruntime-web";
-import { InferenceSession as WebGPUInferenceSession } from "onnxruntime-web/webgpu";
+import ort from "onnxruntime-web";
+import ortWebGPU from "onnxruntime-web/webgpu";
+import imageHelper from "./imageHelper";
+import modelHelper from "./modelHelper";
+import { Tensor } from "onnxruntime-web";
 
 const fetchModel = async (modelUrl: string) => {
 	const response = await fetch(modelUrl);
@@ -12,89 +15,14 @@ const fetchClasses = async (classesUrl: string) => {
 	return (await response.json()) as string[];
 };
 
-const preprocessImageSqueezeNet = (
-	imgElement: HTMLImageElement,
-	targetSize: number = 224
-): Tensor => {
-	const canvas = document.createElement("canvas");
-	canvas.width = targetSize;
-	canvas.height = targetSize;
-
-	const ctx = canvas.getContext("2d");
-
-	if (!ctx) {
-		throw new Error("Could not create canvas 2d context");
-	}
-
-	ctx.drawImage(imgElement, 0, 0, targetSize, targetSize);
-
-	const imageData = ctx.getImageData(0, 0, targetSize, targetSize);
-	const data = new Float32Array(targetSize * targetSize * 3);
-
-	for (let i = 0; i < targetSize * targetSize; i++) {
-		data[i] = imageData.data[i * 4] / 255;
-		data[i + targetSize * targetSize] = imageData.data[i * 4 + 1] / 255;
-		data[i + targetSize * targetSize * 2] = imageData.data[i * 4 + 2] / 255;
-	}
-
-	return new Tensor("float32", data, [1, 3, targetSize, targetSize]);
-};
-
-const preprocessImageMobileNet = (
-	imgElement: HTMLImageElement,
-	targetSize: number = 224
-): Tensor => {
-	const canvas = document.createElement("canvas");
-	canvas.width = targetSize;
-	canvas.height = targetSize;
-
-	const ctx = canvas.getContext("2d");
-
-	if (!ctx) {
-		throw new Error("Could not create canvas 2d context");
-	}
-
-	ctx.drawImage(imgElement, 0, 0, targetSize, targetSize);
-
-	const imageData = ctx.getImageData(0, 0, targetSize, targetSize);
-	const data = new Float32Array(targetSize * targetSize * 3);
-
-	for (let i = 0; i < targetSize * targetSize; i++) {
-		data[i] = imageData.data[i * 4] / 127.5 - 1;
-		data[i + targetSize * targetSize] =
-			imageData.data[i * 4 + 1] / 127.5 - 1;
-		data[i + targetSize * targetSize * 2] =
-			imageData.data[i * 4 + 2] / 127.5 - 1;
-	}
-
-	return new Tensor("float32", data, [1, 3, targetSize, targetSize]);
-};
-
-type SupportedModel = "SqueezeNet" | "MobileNet";
-
-function preprocessImage(
-	imgElement: HTMLImageElement,
-	modelName: SupportedModel,
-	targetSize: number = 224
-): Tensor {
-	switch (modelName) {
-		case "SqueezeNet":
-			return preprocessImageSqueezeNet(imgElement, targetSize);
-		case "MobileNet":
-			return preprocessImageMobileNet(imgElement, targetSize);
-		default:
-			throw new Error(`Model ${modelName} not supported`);
-	}
-}
-
 async function createInferenceSession(model: ArrayBuffer) {
-	const supportsWebGPU = Boolean(navigator.gpu)
+	const supportsWebGPU = Boolean(navigator.gpu);
 
-	const executionProviders = supportsWebGPU ? ['webgpu'] : undefined;
-	
+	const executionProviders = supportsWebGPU ? ["webgpu"] : undefined;
+
 	return supportsWebGPU
-		? await WebGPUInferenceSession.create(model, { executionProviders })
-		: await InferenceSession.create(model, { executionProviders });
+		? await ortWebGPU.InferenceSession.create(model, { executionProviders })
+		: await ort.InferenceSession.create(model, { executionProviders });
 }
 
 export const runInference = async (
@@ -104,7 +32,7 @@ export const runInference = async (
 	const model = await fetchModel(`/static/models/${modelName}/model.onnx`);
 	const classes = await fetchClasses("/static/classes/imagenet.json");
 
-	const imageTensor = preprocessImage(imageElement, modelName);
+	const imageTensor = imageHelper.preprocessImage(imageElement, modelName);
 	console.log("Image processed");
 
 	const session = await createInferenceSession(model);
@@ -115,44 +43,16 @@ export const runInference = async (
 	// Get output results with the output name from the model export.
 	const output = outputData[session.outputNames[0]];
 	//Get the softmax of the output data. The softmax transforms values to be between 0 and 1
-	var outputSoftmax = softmax(Array.prototype.slice.call(output.data));
+	var outputSoftmax = modelHelper.softmax(
+		Array.prototype.slice.call(output.data)
+	);
 	//Get the top 5 results.
-	var results = classesTopK(outputSoftmax, 5, classes);
+	var results = modelHelper.classesTopK(outputSoftmax, 5, classes);
 
 	console.log("results: ", results);
 
 	return results;
 };
-
-//Get the top K classes from the output data.
-function classesTopK(
-	outputData: number[],
-	topK: number,
-	classes: string[]
-): any {
-	//Create an array of indices [0, 1, 2, ..., 999].
-	var resultArray = Array.from(Array(outputData.length).keys());
-	//Sort the indices based on the output data.
-	resultArray.sort((a, b) => outputData[b] - outputData[a]);
-	//Get the top K indices.
-	return resultArray.slice(0, topK).map((i) => {
-		return { label: classes[i], probability: outputData[i] };
-	});
-}
-
-//The softmax transforms values to be between 0 and 1
-function softmax(resultArray: number[]) {
-	// Get the largest value in the array.
-	const largestNumber = Math.max(...resultArray);
-	// Apply exponential function to each result item subtracted by the largest number, use reduce to get the previous result number and the current number to sum all the exponentials results.
-	const sumOfExp = resultArray
-		.map((resultItem) => Math.exp(resultItem - largestNumber))
-		.reduce((prevNumber, currentNumber) => prevNumber + currentNumber);
-	//Normalizes the resultArray by dividing by the sum of all exponentials; this normalization ensures that the sum of the components of the output vector is 1.
-	return resultArray.map((resultValue) => {
-		return Math.exp(resultValue - largestNumber) / sumOfExp;
-	});
-}
 
 export const ensureOnnxRuntime = async () => {
 	try {
@@ -162,7 +62,7 @@ export const ensureOnnxRuntime = async () => {
 		// the model in this example contains a single MatMul node
 		// it has 2 inputs: 'a'(float32, 3x4) and 'b'(float32, 4x3)
 		// it has 1 output: 'c'(float32, 3x3)
-		const session = await InferenceSession.create(model);
+		const session = await ort.InferenceSession.create(model);
 
 		// prepare inputs. a tensor need its corresponding TypedArray as data
 		const dataA = Float32Array.from([
