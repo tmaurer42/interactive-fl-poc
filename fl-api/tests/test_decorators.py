@@ -14,16 +14,27 @@ def client():
 
 
 def test_check_registration_decorator(client):
-    @app.route('/test', methods=['POST'])
+    @app.route('/test', methods=['POST', 'GET'])
     @check_registration(registered_clients)
     def test_route():
         return jsonify({'message': 'Success'}), 200
 
     # Test with a registered client
-    response = client.post('/test', json={'client_id': 'client1'})
+    response = client.post('/test', json={'clientId': 'client1'})
     assert response.status_code == 200
     assert response.get_json()['message'] == 'Success'
 
     # Test with a non-registered client
-    response = client.post('/test', json={'client_id': 'client2'})
+    response = client.post('/test', json={'clientId': 'client2'})
     assert response.status_code == 403
+
+    # Test with a registered client
+    response = client.get('/test', headers={'client-id': 'client1'})
+    assert response.status_code == 200
+    assert response.get_json()['message'] == 'Success'
+
+    # Test with a non-registered client
+    response = client.get('/test', headers={'client-id': 'client2'})
+    assert response.status_code == 403
+
+    
