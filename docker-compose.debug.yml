@@ -1,10 +1,10 @@
 version: "3.4"
 
 services:
-  fl-api:
-    image: fl-api
+  fl-server:
+    image: fl-server
     build:
-      context: ./fl-api
+      context: ./fl-server
       dockerfile: Dockerfile
     command:
       - sh
@@ -22,7 +22,7 @@ services:
       - FLASK_APP=app.py
       - FLASK_ENV=development
     volumes:
-      - ./fl-api:/app
+      - ./fl-server:/app
   fl-client:
     image: fl-client
     build:

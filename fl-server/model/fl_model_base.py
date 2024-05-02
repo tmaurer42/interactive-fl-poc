@@ -9,5 +9,5 @@ class FLModel(ABC):
         self.file: File = file
 
     @abstractmethod
-    def receiveUpdate(self, update):
+    def handleUpdate(self, update):
         pass

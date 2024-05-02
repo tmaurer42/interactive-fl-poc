@@ -54,6 +54,7 @@ def download(filepath: str):
 
 
 # Client registration
+# Does nothing for now
 @api.route('/api/register', methods=['POST'])
 def register():
     client_id = request.json['clientId']
@@ -78,26 +79,16 @@ def get_model(model_id):
 # Endpoint for clients to send their local model
 @api.route('/api/local-model', methods=['POST'])
 def update_model():
-    data = request.json
-    client_id = data['clientId']
-    local_models[client_id] = data['model']
-
-    return {'message': f'Model from client {client_id} received'}
-
-
-# Endpoint for server to aggregate local models
-@api.route('/api/aggregate-model', methods=['POST'])
-def aggregate_model():
     model_id = request.json['modelId']
+    update = request.json['update']
+
     global_model = global_models.get(model_id, None)
     if global_model is None:
-        return {'message': 'Model not found'}, 404
+        return {'message': 'Model with id {model_id} not found'}, 404
+    
+    global_model.handleUpdate(update)
 
-    for client_id, model in local_models.items():
-        # Aggregation logic
-        pass
-
-    return {'message': 'Global model updated'}
+    return {'message': f'Model update received'}
 
 
 port = 5002

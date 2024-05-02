@@ -6,7 +6,7 @@
       "label": "docker-build",
       "platform": "python",
       "dockerBuild": {
-        "tag": "fl-api:latest",
+        "tag": "fl-server:latest",
         "dockerfile": "${workspaceFolder}/Dockerfile",
         "context": "${workspaceFolder}",
         "pull": true

@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "API: Debug",
+      "name": "Server: Debug",
       "type": "docker",
       "request": "launch",
       "preLaunchTask": "docker-run: debug",
@@ -22,7 +22,7 @@
       }
     },
     {
-      "name": "API: Test Debug",
+      "name": "Server: Test Debug",
       "type": "debugpy",
       "request": "launch",
       "module": "pytest",
@@ -33,7 +33,7 @@
       "cwd": "${workspaceFolder}"
     },
     {
-      "name": "API: Attach",
+      "name": "Server: Attach",
       "type": "debugpy",
       "request": "attach",
       "connect": {

@@ -1,4 +1,4 @@
-# FL API
+# FL Client
 
 This is the client application for interactive federated machine learning.
 

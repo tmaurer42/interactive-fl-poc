@@ -9,5 +9,5 @@ class FedBuffFLModel(FLModel):
 
         self.buffer = None
 
-    def receiveUpdate(self, update):
+    def handleUpdate(self, update):
         pass

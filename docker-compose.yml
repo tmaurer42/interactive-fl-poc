@@ -1,10 +1,10 @@
 version: "3.4"
 
 services:
-  fl-api:
-    image: fl-api
+  fl-server:
+    image: fl-server
     build:
-      context: ./fl-api
+      context: ./fl-server
       dockerfile: Dockerfile
     ports:
       - 5002:5002

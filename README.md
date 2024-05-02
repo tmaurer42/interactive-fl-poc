@@ -25,10 +25,10 @@ docker compose -f docker-compose.yml up --build
 docker compose -f docker-compose.debug.yml up --build
 ```
 
-- Attach the debugger for the API by selecting "API: Attach" in the VSCode Debug section. The API will start as soon as the debugger is attached.
+- Attach the debugger for the server by selecting "server: Attach" in the VSCode Debug section. The server will start as soon as the debugger is attached.
 - Attach the debugger for the Client App by selecting "Client: Attach" in the VSCode Debug section. The Client App will start as soon as the debugger is attached.
 
-The API will be available at port **5002**.
+The server will be available at port **5002**.
 The Client App will be available at port **4002**.
 
 If you need hot reload, debug the respective project separately.

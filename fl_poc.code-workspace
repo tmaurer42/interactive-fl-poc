@@ -1,8 +1,8 @@
 {
   "folders": [
     {
-      "name": "FL API",
-      "path": "./fl-api"
+      "name": "FL Server",
+      "path": "./fl-server"
     },
     {
       "name": "FL Client",
@@ -15,7 +15,7 @@
   ],
   "settings": {
     "files.exclude": {
-      "fl-api": true,
+      "fl-server": true,
       "fl-client": true
     }
   }
