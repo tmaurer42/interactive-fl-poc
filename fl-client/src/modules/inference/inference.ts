@@ -4,6 +4,9 @@ import imageHelper from "./imageHelper";
 import modelHelper from "./modelHelper";
 import { Tensor } from "onnxruntime-web";
 
+export type SupportedModel = "SqueezeNet" | "MobileNet";
+
+
 const fetchModel = async (modelUrl: string) => {
 	const response = await fetch(modelUrl);
 	return await response.arrayBuffer();
@@ -27,12 +30,12 @@ async function createInferenceSession(model: ArrayBuffer) {
 
 export const runInference = async (
 	imageElement: HTMLImageElement,
-	modelName: "SqueezeNet" | "MobileNet" = "SqueezeNet"
+	modelName: SupportedModel = "MobileNet"
 ) => {
 	const model = await fetchModel(`/static/models/${modelName}/model.onnx`);
 	const classes = await fetchClasses("/static/classes/imagenet.json");
 
-	const imageTensor = imageHelper.preprocessImage(imageElement, modelName);
+	const imageTensor = imageHelper.preprocessImage(imageElement, 224, [-1, 1]);
 	console.log("Image processed");
 
 	const session = await createInferenceSession(model);

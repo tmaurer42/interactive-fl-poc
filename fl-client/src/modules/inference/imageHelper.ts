@@ -1,6 +1,5 @@
 import { Tensor } from "onnxruntime-web";
 
-export type SupportedModel = "SqueezeNet" | "MobileNet";
 
 const createCanvas = (targetSize: number): CanvasRenderingContext2D => {
 	const canvas = document.createElement("canvas");
@@ -25,7 +24,7 @@ const resizeImage = (
 	return ctx.getImageData(0, 0, targetSize, targetSize);
 };
 
-const normalizeImageData = (
+const imageDataToFloat32Array = (
 	imageData: ImageData,
 	targetSize: number,
 	normalizePixelComponent: (value: number) => number
@@ -45,31 +44,15 @@ const normalizeImageData = (
 	return data;
 };
 
-const preprocessImageSqueezeNet = (
-	imgElement: HTMLImageElement,
-	targetSize: number = 224
-): Tensor => {
-	const ctx = createCanvas(targetSize);
-	const imageData = resizeImage(ctx, imgElement, targetSize);
-	const data = normalizeImageData(imageData, targetSize, (v) => v / 255);
+const getPixelScaler = (low: number, high: number) => (value: number) => {
+	if (low >= high) {
+        throw new Error("Lower limit must be less than upper limit.");
+    }
 
-	return new Tensor("float32", data, [1, 3, targetSize, targetSize]);
-};
+    const normalizedValue = value / 255;
 
-const preprocessImageMobileNet = (
-	imgElement: HTMLImageElement,
-	targetSize: number = 224
-): Tensor => {
-	const ctx = createCanvas(targetSize);
-	const imageData = resizeImage(ctx, imgElement, targetSize);
-	const data = normalizeImageData(
-		imageData,
-		targetSize,
-		(v) => v / 127.5 - 1
-	);
-
-	return new Tensor("float32", data, [1, 3, targetSize, targetSize]);
-};
+    return normalizedValue * (high - low) + low;
+}
 
 /**
  * Preprocess the image for the model.
@@ -85,17 +68,19 @@ const preprocessImageMobileNet = (
  */
 const preprocessImage = (
 	imgElement: HTMLImageElement,
-	modelName: SupportedModel,
-	targetSize: number = 224
+	targetSize: number = 224,
+	scaleRange: [number, number] = [-1, 1]
 ): Tensor => {
-	switch (modelName) {
-		case "SqueezeNet":
-			return preprocessImageSqueezeNet(imgElement, targetSize);
-		case "MobileNet":
-			return preprocessImageMobileNet(imgElement, targetSize);
-		default:
-			throw new Error(`Model ${modelName} not supported`);
-	}
+	const ctx = createCanvas(targetSize);
+	const imageData = resizeImage(ctx, imgElement, targetSize);
+	const data = imageDataToFloat32Array(
+		imageData,
+		targetSize,
+		getPixelScaler(scaleRange[0], scaleRange[1])
+	);
+	const tensor = new Tensor("float32", data, [1, 3, targetSize, targetSize]);
+	
+	return tensor
 };
 
 export default { preprocessImage };
