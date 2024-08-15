@@ -1,13 +1,8 @@
+from dataclasses import dataclass
 from .file import File
 from .fl_model_base import FLModel
 
+@dataclass
 class FedBuffFLModel(FLModel):
-    def __init__(self, 
-                 title: str,
-                 file: File,):
-        super().__init__(title, file)
-
-        self.buffer = None
-
     def handleUpdate(self, update):
         pass

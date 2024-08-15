@@ -22,10 +22,14 @@ global_models: dict[str, FLModel] = {
     'mobilenet_pretrained': FedBuffFLModel(
         title='MobileNet (pretrained)',
         file=File('models/mobilenet_pretrained.onnx'),
+        input_size=224,
+        norm_range=(-1, 1)
     ),
     'squeezenet_pretrained': FedBuffFLModel(
         title='SqueezeNet (pretrained)',
         file=File('models/squeezenet_pretrained.onnx'),
+        input_size=224,
+        norm_range=(0, 1)
     )
 }
 clients = set()
@@ -66,12 +70,14 @@ def register():
 # Get global model
 @api.route('/api/global-model/<model_id>', methods=['GET'])
 def get_model(model_id):
-    global_model: FLModel = global_models.get(model_id, None)
+    global_model = global_models.get(model_id, None)
     if global_model is None:
         return {'message': 'Model not found'}, 404
 
     return {
         'title': global_model.title,
+        'input_size': global_model.input_size,
+        'norm_range': global_model.norm_range,
         'uri': f'/download/{global_model.file.path}',
     }
 

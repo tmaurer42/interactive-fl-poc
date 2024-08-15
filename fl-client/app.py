@@ -1,8 +1,15 @@
+import configparser
+
+import requests
 from flask import Flask, render_template, send_from_directory
 
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+cfg_parser = configparser.ConfigParser()
+cfg_parser.read('config.ini')
+config = cfg_parser['DEFAULT']
 
 
 @app.route('/')
@@ -12,6 +19,11 @@ def index():
 
 @app.route('/inference')
 def inference():
+    model_id = "mobilenet_pretrained"
+    resp = requests.get(f"{config['ServerUrl']}/api/global-model/{model_id}")
+    model = resp.json()
+    model_download_url = model['uri']
+
     return render_template('inference.html')
 
 

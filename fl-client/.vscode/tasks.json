@@ -2,6 +2,11 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "type": "shell",
+      "label": "docker-network",
+      "command": "docker network create fl-poc || true" 
+    },
+    {
       "label": "yarn build",
       "type": "shell",
       "command": "yarn build",
@@ -25,8 +30,10 @@
     {
       "type": "docker-run",
       "label": "docker-run: debug",
-      "dependsOn": ["docker-build"],
+      "dependsOn": ["docker-build", "docker-network"],
       "dockerRun": {
+        "network": "fl-poc",
+        "containerName": "fl-client",
         "env": {
           "FLASK_APP": "app.py",
           "FLASK_ENV": "development"
