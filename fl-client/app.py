@@ -17,14 +17,19 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/inference')
-def inference():
+@app.route('/test-model')
+def test_model():
     model_id = "mobilenet_pretrained"
     resp = requests.get(f"{config['ServerUrl']}/api/global-model/{model_id}")
     model = resp.json()
     model_download_url = model['uri']
 
-    return render_template('inference.html')
+    return render_template('test_model.html')
+
+
+@app.route('/train-model')
+def train_model():
+    return render_template('train_model.html')
 
 
 @app.route('/hello')

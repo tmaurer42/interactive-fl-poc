@@ -1,4 +1,4 @@
-import { runInference } from "..";
+import * as inference from "modules/inference";
 
 export class ImageInferenceElement extends HTMLElement {
 	/*
@@ -21,7 +21,7 @@ export class ImageInferenceElement extends HTMLElement {
 	}
 
 	render() {
-		this.innerHTML = /*html*/`
+		this.innerHTML = /*html*/ `
 			<div class="columns">
 				<div class="column is-half">
 					<div class="block">
@@ -86,7 +86,7 @@ export class ImageInferenceElement extends HTMLElement {
 			`#${this.imageId}`
 		) as HTMLImageElement;
 
-		const result = await runInference(imageElement, "MobileNet");
+		const result = await inference.runInference(imageElement, "MobileNet");
 
 		this.displayResult(result);
 	};
@@ -98,8 +98,7 @@ export class ImageInferenceElement extends HTMLElement {
 		}>
 	) {
 		const resultContainer = this.querySelector(`#${this.resultId}`);
-		resultContainer!.innerHTML =
-			/*html*/`<h5 class='title is-5'>Top 5 Results</h5>`;
+		resultContainer!.innerHTML = /*html*/ `<h5 class='title is-5'>Top 5 Results</h5>`;
 
 		result.forEach((item, i) => {
 			const label = document.createElement("p");

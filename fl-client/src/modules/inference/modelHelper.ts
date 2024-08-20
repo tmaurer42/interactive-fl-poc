@@ -14,7 +14,7 @@ export type ClassProbability = {
  * @returns
  * The top K classes.
  */
-const classesTopK = (
+export const classesTopK = (
 	outputData: number[],
 	topK: number,
 	classes: string[]
@@ -39,7 +39,7 @@ const classesTopK = (
  * @returns
  * The softmax of the resultArray.
  */
-const softmax = (resultArray: number[]) => {
+export const softmax = (resultArray: number[]) => {
 	// Get the largest value in the array.
 	const largestNumber = Math.max(...resultArray);
 	// Apply exponential function to each result item subtracted by the largest number, use reduce to get the previous result number and the current number to sum all the exponentials results.
@@ -51,5 +51,3 @@ const softmax = (resultArray: number[]) => {
 		return Math.exp(resultValue - largestNumber) / sumOfExp;
 	});
 };
-
-export default { classesTopK, softmax };

@@ -1,11 +1,9 @@
-import ort from "onnxruntime-web";
+import ort, { Tensor } from "onnxruntime-web";
 import ortWebGPU from "onnxruntime-web/webgpu";
-import imageHelper from "./imageHelper";
-import modelHelper from "./modelHelper";
-import { Tensor } from "onnxruntime-web";
+import * as imageHelper from "./imageHelper";
+import * as modelHelper from "./modelHelper";
 
 export type SupportedModel = "SqueezeNet" | "MobileNet";
-
 
 const fetchModel = async (modelUrl: string) => {
 	const response = await fetch(modelUrl);
@@ -57,7 +55,7 @@ export const runInference = async (
 	return results;
 };
 
-export const ensureOnnxRuntime = async () => {
+const ensureOnnxRuntime = async () => {
 	try {
 		var model = await fetchModel("/static/models/testmodel.onnx");
 		// create a new session and load the specific model.
