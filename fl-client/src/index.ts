@@ -1,5 +1,5 @@
 import { configureOrt } from "./ortConfig";
-import { registerComponents } from "./components";
+import { registerComponents } from "components";
 
 configureOrt();
 registerComponents();

@@ -1,38 +1,133 @@
-import * as inference from "modules/inference";
-import { ImageRepository, ModelImage, Stage } from "modules/repository";
+import { runInference } from "modules";
+import {
+	ImageRepository,
+	ModelImage,
+	Repository,
+	Stage,
+} from "modules/repository";
 
-export class ImageUploader extends HTMLElement {
-	private repository: ImageRepository | undefined;
-	private images: ModelImage<any>[] = [];
-	private objectStoreNameAttribute = "object-store-name";
+type ClassificationResult = {
+	label: string;
+};
+
+export class ImageClassificationComponent extends HTMLElement {
+	private repository: ImageRepository;
+	private imageKey?: number;
+	private imageElementId?: string;
+	private labelElementId?: string;
+	private modelImage?: ModelImage<ClassificationResult>;
+
+	private imageKeyAttribute = "image-key";
 
 	constructor() {
 		super();
+		this.repository = Repository;
 	}
 
 	connectedCallback(): void {
-		if (!this.hasAttribute(this.objectStoreNameAttribute)) {
-			console.error(
-				`missing attribute in ${ImageUploader.name}: ${this.objectStoreNameAttribute}`
-			);
+		const requiredAttributes = [this.imageKeyAttribute];
+		if (!hasRequiredAttributes(this, requiredAttributes)) {
 			this.innerHTML = "";
 			return;
 		}
 
-		this.repository = new ImageRepository(
-			this.getAttribute(this.objectStoreNameAttribute)!
-		);
+		const imageKey = this.getAttribute(this.imageKeyAttribute)!;
+		this.imageKey = parseInt(imageKey);
+		this.imageElementId = `model-image-${imageKey}`;
+		this.labelElementId = `${this.imageElementId}-label`;
+
 		this.innerHTML = this.render();
-		this.repository.initializeDB().then(() => {
-			this.loadImages();
-		});
 		this.bindEvents();
+		this.repository
+			.getImage<ClassificationResult>(this.imageKey)
+			.then((image) => {
+				this.modelImage = image;
+				this.loadImage();
+			});
+	}
+
+	private loadImage(): any {
+		if (!this.modelImage) {
+			return;
+		}
+
+		const imgElement = this.querySelector(
+			`#${this.imageElementId}`
+		) as HTMLImageElement;
+
+		imgElement.onload = (ev) => this.getOrInferLabel(ev);
+		imgElement.src = this.modelImage.imageData;
+	}
+
+	private getOrInferLabel(ev: Event) {
+		if (!this.modelImage) {
+			return;
+		}
+
+		const imgElement = ev.target as HTMLImageElement;
+		const label = document.querySelector(
+			`#${this.labelElementId}`
+		) as HTMLLabelElement;
+
+		if (this.modelImage.predictionResult) {
+			label.innerHTML = this.modelImage.predictionResult.label;
+		} else {
+			label.innerHTML = "Running inference...";
+			runInference(imgElement, "MobileNet").then((results) => {
+				const inferredLabel = results[0].label;
+				this.modelImage!.predictionResult = {
+					label: inferredLabel,
+				};
+				this.repository.updateImageData(
+					this.imageKey!,
+					this.modelImage!
+				);
+				label.innerHTML = inferredLabel;
+			});
+		}
+	}
+
+	private bindEvents(): void {}
+
+	private render(): string {
+		return `
+            <div>
+                <img id="${this.imageElementId}" class="image, m-2, is-fullwidth" />
+            </div>
+            <div>
+                <label id=${this.labelElementId}></label>
+            </div>
+        `;
+	}
+}
+
+export class ImageUploader extends HTMLElement {
+	private repository: ImageRepository;
+	private imageIds: number[] = [];
+	private objectStoreNameAttribute = "object-store-name";
+
+	constructor() {
+		super();
+		this.repository = Repository;
+	}
+
+	connectedCallback(): void {
+		if (!hasRequiredAttributes(this, [this.objectStoreNameAttribute])) {
+			this.innerHTML = "";
+			return;
+		}
+
+		this.innerHTML = this.render();
+		this.bindEvents();
+		this.repository
+			.initializeDB(this.getAttribute(this.objectStoreNameAttribute)!)
+			.then(() => this.loadImages());
 	}
 
 	// Load images from IndexedDB
 	private loadImages(): void {
-		this.repository?.getAllImages().then((images) => {
-			this.images = images;
+		this.repository.getAllIds().then((ids) => {
+			this.imageIds = ids;
 			this.updateImageDisplay();
 		});
 	}
@@ -59,10 +154,9 @@ export class ImageUploader extends HTMLElement {
 				if (event.target && event.target.result) {
 					const imageData = event.target.result as string;
 					this.repository
-						?.addImage({
+						.addImage({
 							imageData,
 							metadata: {},
-							predictionResult: {},
 							stage: Stage.Inference,
 						})
 						.then(() => this.loadImages());
@@ -79,22 +173,15 @@ export class ImageUploader extends HTMLElement {
 		) as HTMLElement;
 		imageContainer.innerHTML = "";
 		Promise.all(
-			this.images.map(async (image) => {
+			this.imageIds.map(async (id) => {
 				const cell = document.createElement("div");
 				cell.classList.add("cell");
-				const img = document.createElement("img");
-				img.src = image.imageData;
-				img.classList.add("image", "m-2", "is-fullwidth");
-				const labelElement = document.createElement("label");
-				labelElement.innerHTML = "Label";
 
-				cell.appendChild(img);
-				cell.appendChild(labelElement);
+				cell.innerHTML = `
+                    <image-classification image-key="${id}" />
+                `;
+
 				imageContainer.appendChild(cell);
-
-				// const inferenceResult = await runInference(img, "MobileNet");
-				// const label = inferenceResult[0].label;
-				// labelElement.innerHTML = label;
 			})
 		);
 	}
@@ -113,4 +200,22 @@ export class ImageUploader extends HTMLElement {
             </div>
       `;
 	}
+}
+
+function hasRequiredAttributes(
+	element: HTMLElement,
+	attributes: string[]
+): boolean {
+	let result = true;
+
+	for (const attribute of attributes) {
+		if (!element.hasAttribute(attribute)) {
+			console.error(
+				`missing attribute in ${element.localName}: ${attribute}`
+			);
+			result = false;
+		}
+	}
+
+	return result;
 }

@@ -6,11 +6,10 @@ export enum Stage {
 }
 
 export interface ModelImage<T extends KeyValuePairs> {
-	id: number; // Auto-incremented ID
 	imageData: string; // Base64 encoded image data
 	stage: Stage;
 	metadata: KeyValuePairs; // Metadata associated with the image
-	predictionResult: T;
+	predictionResult?: T;
 }
 
 export type ModelImageCreateInput<T extends KeyValuePairs> = Omit<
@@ -24,13 +23,16 @@ export type ModelImageUpdateInput<T extends KeyValuePairs> = Omit<
 
 export class ImageRepository {
 	private db: IDBDatabase | null = null;
-	private objectStoreName: string;
+	private _objectStoreName: string = "";
 
-	constructor(objectStoreName: string) {
-		this.objectStoreName = objectStoreName;
+	get objectStoreName() {
+		return this._objectStoreName;
 	}
 
-	public initializeDB(): Promise<void> {
+	constructor() {}
+
+	public initializeDB(objectStoreName: string): Promise<void> {
+		this._objectStoreName = objectStoreName;
 		return new Promise((resolve, reject) => {
 			const request = indexedDB.open("imageUploaderDB", 1);
 
@@ -106,7 +108,31 @@ export class ImageRepository {
 		});
 	}
 
+	getAllIds(): Promise<number[]> {
+		return new Promise((resolve, reject) => {
+			if (!this.db) {
+				return reject("Database not initialized");
+			}
+
+			const transaction = this.db.transaction(
+				this.objectStoreName,
+				"readonly"
+			);
+			const objectStore = transaction.objectStore(this.objectStoreName);
+			const request = objectStore.getAllKeys();
+
+			request.onsuccess = () => {
+				resolve(request.result as number[]);
+			};
+
+			request.onerror = (event: Event) => {
+				reject((event.target as IDBRequest).error);
+			};
+		});
+	}
+
 	updateImageData<T extends KeyValuePairs>(
+		id: number,
 		input: ModelImageUpdateInput<T>
 	): Promise<void> {
 		return new Promise((resolve, reject) => {
@@ -119,14 +145,14 @@ export class ImageRepository {
 				"readwrite"
 			);
 			const objectStore = transaction.objectStore(this.objectStoreName);
-			const request = objectStore.get(input.id);
+			const request = objectStore.get(id);
 
 			request.onsuccess = () => {
 				const image = request.result as ModelImage<any>;
 				if (image) {
 					image.metadata = input.metadata;
 					image.predictionResult = input.predictionResult;
-					const updateRequest = objectStore.put(image);
+					const updateRequest = objectStore.put(image, id);
 
 					updateRequest.onsuccess = () => {
 						resolve();
@@ -192,3 +218,5 @@ export class ImageRepository {
 		});
 	}
 }
+
+export const Repository = new ImageRepository();
