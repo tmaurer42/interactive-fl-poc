@@ -1,11 +1,10 @@
 import { ImageInferenceElement } from "./ImageInference";
-import { ImageUploader, ImageClassificationComponent } from "./ImageUploader";
+import { ClassificationImageUploader } from "./ClassificationImageUploader";
 
 export const registerComponents = () => {
 	window.customElements.define("image-inference", ImageInferenceElement);
 	window.customElements.define(
-		"image-classification",
-		ImageClassificationComponent
+		"classification-image-uploader",
+		ClassificationImageUploader
 	);
-	window.customElements.define("image-uploader", ImageUploader);
 };

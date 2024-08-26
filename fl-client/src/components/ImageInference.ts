@@ -1,4 +1,6 @@
 import * as inference from "modules/inference";
+import { imageNetClasses } from "modules/inference/imagenetClasses";
+import * as modelHelper from "modules/inference/modelHelper";
 
 export class ImageInferenceElement extends HTMLElement {
 	/*
@@ -86,9 +88,23 @@ export class ImageInferenceElement extends HTMLElement {
 			`#${this.imageId}`
 		) as HTMLImageElement;
 
-		const result = await inference.runInference(imageElement, "MobileNet");
+		const session = await inference.createInferenceSession(
+			`/static/models/MobileNet/model.onnx`
+		);
+		const outputs = await inference.runInference(session, imageElement);
+		const output = outputs[session.outputNames[0]];
+		//Get the softmax of the output data. The softmax transforms values to be between 0 and 1
+		var outputSoftmax = modelHelper.softmax(
+			Array.prototype.slice.call(output.data)
+		);
+		//Get the top 5 results.
+		var results = modelHelper.classesTopK(
+			outputSoftmax,
+			5,
+			imageNetClasses
+		);
 
-		this.displayResult(result);
+		this.displayResult(results);
 	};
 
 	displayResult(

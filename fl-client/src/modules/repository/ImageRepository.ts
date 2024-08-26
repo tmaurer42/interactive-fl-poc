@@ -1,4 +1,4 @@
-type KeyValuePairs = { [key: string]: any };
+export type KeyValuePairs = { [key: string]: any };
 
 export enum Stage {
 	Inference,
