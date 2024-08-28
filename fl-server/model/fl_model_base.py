@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from .file import File
 
 @dataclass
 class FLModel(ABC):
     id: str
     title: str
-    file: File
-    training_file: File
-    optimizer_file: File
-    eval_file: File
-    checkpoint_file: File
+    classes: list[str]
+    file: str
+    training_file: str
+    optimizer_file: str
+    eval_file: str
+    checkpoint_file: str
     input_size: int
     norm_range: list[int]
 

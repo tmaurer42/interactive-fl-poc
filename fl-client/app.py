@@ -40,14 +40,8 @@ def train_model():
     model_id = "mobilenet_pretrained_demo"
     resp = requests.get(f"{config['ServerUrl']}/api/global-model/{model_id}")
     model = resp.json()
-    download_url = model['model_url']
-    input_size = model['input_size']
-    norm_range = model['norm_range']
 
-    return render_template('train_model.html', 
-        model_url=download_url,
-        input_size=input_size,
-        norm_range=norm_range)
+    return render_template('train_model.html', model=model)
 
 
 @app.route('/hello')
@@ -80,7 +74,7 @@ def download(filepath: str):
     last_modified = datetime.now()
     etag = f'{hash(file_bytes)}-{last_modified.timestamp()}'
     expires = last_modified + timedelta(seconds=3600)
-    
+
     response.headers['Cache-Control'] = 'public, max-age=3600'
     response.headers['Last-Modified'] = last_modified.strftime("%a, %d %b %Y %H:%M:%S GMT")
     response.headers['ETag'] = etag

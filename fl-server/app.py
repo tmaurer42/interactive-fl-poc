@@ -5,7 +5,6 @@ from flask import Flask, request, jsonify, send_file
 from ml.models.mobilenet import get_mobilenet
 # from ml.onnx import model_to_onnx
 from ml.onnx import model_to_onnx
-from model.file import File
 from model.fl_model_base import FLModel
 from model.fl_model_fedbuff import FedBuffFLModel
 from storage.file_system_storage import FileSystemStorage
@@ -41,12 +40,13 @@ if not os.path.exists(demo_model_dir_internal):
 demo_model_dir = os.path.join('models', demo_model_id)
 global_models[demo_model_id] = FedBuffFLModel(
     id='mobilenet_pretrained_demo',
-    title='MobileNet (pretrained)',
-    file=File(os.path.join(demo_model_dir, "model.onnx")),
-    training_file=File(os.path.join(demo_model_dir, "training_model.onnx")),
-    optimizer_file=File(os.path.join(demo_model_dir, "optimizer_model.onnx")),
-    eval_file=File(os.path.join(demo_model_dir, "eval_model.onnx")),
-    checkpoint_file=File(os.path.join(demo_model_dir, "checkpoint")),
+    title='MobileNet (pretrained) for cats and dogs',
+    classes=["cat", "dog"],
+    file=os.path.join(demo_model_dir, "model.onnx"),
+    training_file=os.path.join(demo_model_dir, "training_model.onnx"),
+    optimizer_file=os.path.join(demo_model_dir, "optimizer_model.onnx"),
+    eval_file=os.path.join(demo_model_dir, "eval_model.onnx"),
+    checkpoint_file=os.path.join(demo_model_dir, "checkpoint"),
     input_size=224,
     norm_range=[-1,1]
 )
@@ -90,12 +90,7 @@ def get_model(model_id):
     if global_model is None:
         return {'message': 'Model not found'}, 404
 
-    return {
-        'title': global_model.title,
-        'input_size': global_model.input_size,
-        'norm_range': global_model.norm_range,
-        'model_url': f'/download/{global_model.file.path}',
-    }
+    return jsonify(vars(global_model))
 
 
 # Endpoint for clients to send their local model

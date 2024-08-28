@@ -1,7 +1,7 @@
 import ort, { InferenceSession } from "onnxruntime-web";
 
 import { imageNetClasses } from "modules/inference/imagenetClasses";
-import { ImageUploaderBase } from "./ImageUploaderBase";
+import { VisionModelTrainerBase } from "./ImageUploaderBase";
 import { KeyValuePairs, ModelImage } from "modules/repository";
 import * as modelHelper from "modules/inference/modelHelper";
 
@@ -9,7 +9,7 @@ type ClassificationResult = {
 	label: string;
 };
 
-export class ClassificationImageUploader extends ImageUploaderBase<ClassificationResult> {
+export class ClassificationModelTrainer extends VisionModelTrainerBase<ClassificationResult> {
 	private classes = imageNetClasses;
 
 	constructor() {

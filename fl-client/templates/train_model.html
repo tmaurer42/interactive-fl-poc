@@ -3,12 +3,16 @@
   <div class="container">
     <div class="box">
       <h2 class="title is-4">Train the model</h2>
-      <classification-image-uploader 
+      <classification-model-trainer 
         id="trainer" 
-        object-store-name="ImageNet"
-        model-url="{{model_url}}"
-        input-image-size="{{input_size}}"
-        norm-range="{{norm_range[0]}},{{norm_range[1]}}"
+        object-store-name="{{model.id}}"
+        model-url="/download/{{model.file}}"
+        training-model-url="/download/{{model.training_file}}"
+        optimizer-model-url="/download/{{model.optimizer_file}}"
+        eval-model-url="/download/{{model.eval_file}}"
+        checkpoint-url="/download/{{model.checkpoint_file}}"
+        input-image-size="{{model.input_size}}"
+        norm-range="{{model.norm_range[0]}},{{model.norm_range[1]}}"
       >
       </image-uploader>
     </div>

@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from .file import File
 from .fl_model_base import FLModel
 
 @dataclass

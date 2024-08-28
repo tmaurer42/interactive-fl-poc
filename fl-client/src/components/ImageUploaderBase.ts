@@ -16,7 +16,7 @@ type InferenceInput<T extends KeyValuePairs> = {
 	container: HTMLDivElement;
 };
 
-export abstract class ImageUploaderBase<
+export abstract class VisionModelTrainerBase<
 	TPredictionResult extends KeyValuePairs
 > extends HTMLElement {
 	private objectStoreNameAttribute = "object-store-name";
