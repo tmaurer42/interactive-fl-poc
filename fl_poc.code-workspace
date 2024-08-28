@@ -11,17 +11,12 @@
     {
       "name": "Root",
       "path": "."
-    },
-    {
-      "name": "Model Factory",
-      "path": "model_factory"
     }
   ],
   "settings": {
     "files.exclude": {
       "fl-server": true,
-      "fl-client": true,
-      "model_factory": true
+      "fl-client": true
     }
   }
 }

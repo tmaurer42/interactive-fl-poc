@@ -21,10 +21,15 @@ export abstract class ImageUploaderBase<
 > extends HTMLElement {
 	private objectStoreNameAttribute = "object-store-name";
 	private modelUrlAttribute = "model-url";
+	private inputImageSizeAttribute = "input-image-size";
+	private normRangeAtribute = "norm-range";
+
+	private modelUrl: string = "";
+	private inputImageSize: number = 224;
+	private normRange: [number, number] = [-1, 1];
 
 	private repository: ImageRepository;
 	private modelImageIds: number[] = [];
-	private modelUrl: string = "";
 	private numColumns: number = 5;
 
 	constructor() {
@@ -60,6 +65,8 @@ export abstract class ImageUploaderBase<
 			!hasRequiredAttributes(this, [
 				this.objectStoreNameAttribute,
 				this.modelUrlAttribute,
+				this.inputImageSizeAttribute,
+				this.normRangeAtribute,
 			])
 		) {
 			this.innerHTML = "";
@@ -67,6 +74,15 @@ export abstract class ImageUploaderBase<
 		}
 
 		this.modelUrl = this.getAttribute(this.modelUrlAttribute)!;
+		this.inputImageSize = parseInt(
+			this.getAttribute(this.inputImageSizeAttribute)!
+		);
+		const normRangeStr = this.getAttribute(this.normRangeAtribute)!;
+		this.normRange = normRangeStr.split(",").map((n) => parseInt(n)) as [
+			number,
+			number
+		];
+
 		this.innerHTML = this.render();
 		this.bindEvents();
 		this.repository
@@ -174,7 +190,9 @@ export abstract class ImageUploaderBase<
 				this.updateInferenceLoading(container, "Running Inference...");
 				const outputs = await runInference(
 					inferenceSession,
-					imgElement
+					imgElement,
+					this.inputImageSize,
+					this.normRange
 				);
 				const predicitonResult = this.modelOutputsToPredictionResult(
 					outputs,

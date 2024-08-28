@@ -91,7 +91,12 @@ export class ImageInferenceElement extends HTMLElement {
 		const session = await inference.createInferenceSession(
 			`/static/models/MobileNet/model.onnx`
 		);
-		const outputs = await inference.runInference(session, imageElement);
+		const outputs = await inference.runInference(
+			session,
+			imageElement,
+			224,
+			[-1, 1]
+		);
 		const output = outputs[session.outputNames[0]];
 		//Get the softmax of the output data. The softmax transforms values to be between 0 and 1
 		var outputSoftmax = modelHelper.softmax(

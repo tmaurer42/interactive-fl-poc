@@ -68,14 +68,14 @@ const getPixelScaler = (low: number, high: number) => (value: number) => {
 export const preprocessImage = (
 	imgElement: HTMLImageElement,
 	targetSize: number = 224,
-	scaleRange: [number, number] = [-1, 1]
+	normRange: [number, number] = [-1, 1]
 ): Tensor => {
 	const ctx = createCanvas(targetSize);
 	const imageData = resizeImage(ctx, imgElement, targetSize);
 	const data = imageDataToFloat32Array(
 		imageData,
 		targetSize,
-		getPixelScaler(scaleRange[0], scaleRange[1])
+		getPixelScaler(normRange[0], normRange[1])
 	);
 	const tensor = new Tensor("float32", data, [1, 3, targetSize, targetSize]);
 

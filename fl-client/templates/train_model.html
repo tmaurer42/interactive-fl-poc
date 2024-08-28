@@ -3,7 +3,14 @@
   <div class="container">
     <div class="box">
       <h2 class="title is-4">Train the model</h2>
-      <classification-image-uploader object-store-name="ImageNet" model-url="/static/models/MobileNet/model.onnx"></image-uploader>
+      <classification-image-uploader 
+        id="trainer" 
+        object-store-name="ImageNet"
+        model-url="{{model_url}}"
+        input-image-size="{{input_size}}"
+        norm-range="{{norm_range[0]}},{{norm_range[1]}}"
+      >
+      </image-uploader>
     </div>
   </div>
 </section>

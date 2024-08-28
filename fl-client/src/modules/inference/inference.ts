@@ -21,10 +21,15 @@ export async function createInferenceSession(modelUrl: string) {
 
 export const runInference = async (
 	session: ort.InferenceSession,
-	imageElement: HTMLImageElement
+	imageElement: HTMLImageElement,
+	imageTargetSize: number,
+	normRange: [number, number]
 ) => {
-	const imageTensor = imageHelper.preprocessImage(imageElement, 224, [-1, 1]);
-	console.log("Image processed");
+	const imageTensor = imageHelper.preprocessImage(
+		imageElement,
+		imageTargetSize,
+		normRange
+	);
 	const inputName = session.inputNames[0];
 	const feeds = { [inputName]: imageTensor };
 	const outputData = await session.run(feeds);
