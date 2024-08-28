@@ -1,5 +1,5 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
-FROM python:3.12.0b4-slim
+FROM python:3.12.5-slim
 
 EXPOSE 5002
 
@@ -8,6 +8,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
+
+RUN pip install --upgrade pip
 
 # Install pip requirements
 COPY requirements.txt .

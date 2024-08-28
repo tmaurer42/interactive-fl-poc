@@ -11,6 +11,7 @@
       "label": "docker-build",
       "platform": "python",
       "dockerBuild": {
+        "platform": "linux/amd64",
         "tag": "fl-server:latest",
         "dockerfile": "${workspaceFolder}/Dockerfile",
         "context": "${workspaceFolder}",

@@ -2,3 +2,7 @@ Flask
 gunicorn
 Werkzeug
 pytest
+torch
+torchvision
+onnx
+onnxruntime-training-cpu

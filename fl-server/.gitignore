@@ -1,3 +1,5 @@
+__file_storage__
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
