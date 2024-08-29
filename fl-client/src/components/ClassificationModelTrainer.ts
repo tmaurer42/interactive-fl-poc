@@ -1,9 +1,9 @@
 import ort, { InferenceSession } from "onnxruntime-web";
 
-import { imageNetClasses } from "modules/inference/imagenetClasses";
-import { VisionModelTrainerBase } from "./ImageUploaderBase";
-import { KeyValuePairs, ModelImage } from "modules/repository";
-import * as modelHelper from "modules/inference/modelHelper";
+import { VisionModelTrainerBase } from "./VisionModelTrainerBase";
+import { KeyValuePairs, ModelImage } from "modules/ImageRepository";
+import * as postprocessing from "modules/utils/postprocessing";
+import { imageNetClasses } from "modules/utils/imagenetClasses";
 
 type ClassificationResult = {
 	label: string;
@@ -63,10 +63,14 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 		session: InferenceSession
 	) {
 		const output = outputs[session.outputNames[0]];
-		var outputSoftmax = modelHelper.softmax(
+		var outputSoftmax = postprocessing.softmax(
 			Array.prototype.slice.call(output.data)
 		);
-		var results = modelHelper.classesTopK(outputSoftmax, 5, this.classes);
+		var results = postprocessing.classesTopK(
+			outputSoftmax,
+			5,
+			this.classes
+		);
 
 		return {
 			label: results[0].label,

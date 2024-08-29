@@ -5,4 +5,4 @@ pytest
 torch
 torchvision
 onnx
-onnxruntime-training-cpu
+onnxruntime-training-cpu==1.19.1

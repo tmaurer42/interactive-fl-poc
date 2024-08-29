@@ -1,2 +1,4 @@
 export * from "./inference";
-export * from "./repository";
+export * from "./training";
+export * from "./ImageRepository";
+export * from "./utils";

@@ -58,6 +58,9 @@ def send_static(path):
 def download(filepath: str):
     file_url = f"{config['ServerUrl']}/download/{filepath}"
     resp = requests.get(file_url)
+    if resp.status_code != 200:
+        return {'message': 'Download failed'}, resp.status_code
+        
     file_bytes: bytes = resp.content
     file_name = filepath.split('/')[-1]
     mime_type = guess_type(file_name)[0] or 'application/octet-stream'

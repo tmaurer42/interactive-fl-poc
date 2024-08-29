@@ -1,5 +1,5 @@
 import { ImageInferenceElement } from "./ImageInference";
-import { ClassificationModelTrainer } from "./ClassificationImageUploader";
+import { ClassificationModelTrainer } from "./ClassificationModelTrainer";
 
 export const registerComponents = () => {
 	window.customElements.define("image-inference", ImageInferenceElement);

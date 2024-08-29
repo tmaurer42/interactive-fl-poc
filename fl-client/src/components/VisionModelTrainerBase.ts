@@ -7,7 +7,7 @@ import {
 	ModelImage,
 	Repository,
 	Stage,
-} from "modules/repository";
+} from "modules/ImageRepository";
 
 type InferenceInput<T extends KeyValuePairs> = {
 	id: number;

@@ -1,16 +1,12 @@
 import ort, { Tensor } from "onnxruntime-web";
 import ortWebGPU from "onnxruntime-web/webgpu";
-import * as imageHelper from "./imageHelper";
+import { fetchAsArrayBuffer } from "modules/utils/helpers";
+import { preprocessImage } from "modules/utils/preprocessing";
 
 export type SupportedModel = "SqueezeNet" | "MobileNet";
 
-const fetchModel = async (modelUrl: string) => {
-	const response = await fetch(modelUrl);
-	return await response.arrayBuffer();
-};
-
 export async function createInferenceSession(modelUrl: string) {
-	const model = await fetchModel(modelUrl);
+	const model = await fetchAsArrayBuffer(modelUrl);
 	const supportsWebGPU = Boolean(navigator.gpu);
 	const executionProviders = supportsWebGPU ? ["webgpu"] : undefined;
 
@@ -25,7 +21,7 @@ export const runInference = async (
 	imageTargetSize: number,
 	normRange: [number, number]
 ) => {
-	const imageTensor = imageHelper.preprocessImage(
+	const imageTensor = preprocessImage(
 		imageElement,
 		imageTargetSize,
 		normRange

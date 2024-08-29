@@ -5,11 +5,16 @@ module.exports = {
     entry: path.resolve(__dirname, 'src/index.ts'),
     module: {
         rules: [
-        {
-            test: /\.ts?$/,
-            use: 'ts-loader',
-            exclude: /node_modules/,
-        },
+            {
+                test: /\.ts?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
+            },
+            {
+                test: /\.js$/,
+                enforce: "pre",
+                use: ["source-map-loader"],
+            },
         ],
     },
     resolve: {
@@ -28,6 +33,7 @@ module.exports = {
         new CopyPlugin({
             patterns: [
                 { from: './node_modules/onnxruntime-web/dist/*.wasm', to: '[name][ext]' },
+                { from: './node_modules/onnxruntime-web/dist/ort-training-wasm-simd-threaded.mjs', to: '[name][ext]' },
             ]
         })
     ],
