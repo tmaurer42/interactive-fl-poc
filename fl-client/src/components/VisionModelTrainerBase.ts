@@ -5,6 +5,7 @@ import {
 	ImageRepository,
 	KeyValuePairs,
 	ModelImage,
+	ModelImageUpdateInput,
 	Repository,
 	Stage,
 } from "modules/ImageRepository";
@@ -30,7 +31,8 @@ export abstract class VisionModelTrainerBase<
 
 	private repository: ImageRepository;
 	private modelImageIds: number[] = [];
-	private numColumns: number = 5;
+	private imagesReadyForTraining = 0;
+	private columnSize: number = 12;
 
 	constructor() {
 		super();
@@ -59,6 +61,18 @@ export abstract class VisionModelTrainerBase<
 		outputs: ort.InferenceSession.OnnxValueMapType,
 		session: InferenceSession
 	): TPredictionResult;
+
+	protected async updateImageData(
+		id: number,
+		update: ModelImageUpdateInput<TPredictionResult>
+	): Promise<void> {
+		await this.repository.updateImageData(id, update);
+	}
+
+	protected incrementProgress() {
+		this.imagesReadyForTraining += 1;
+		this.updateProgressDisplay();
+	}
 
 	connectedCallback(): void {
 		if (
@@ -101,13 +115,13 @@ export abstract class VisionModelTrainerBase<
 		const imageInput = this.querySelector(
 			"#imageInput"
 		) as HTMLInputElement;
-		imageInput.addEventListener("change", (event: Event) => {
+		imageInput.onchange = (event: Event) => {
 			const target = event.target as HTMLInputElement;
 			if (target.files) {
 				this.handleFiles(target.files);
 				imageInput.value = "";
 			}
-		});
+		};
 	}
 
 	private handleFiles(files: FileList): void {
@@ -169,15 +183,21 @@ export abstract class VisionModelTrainerBase<
 						container: cell,
 					});
 				};
-				this.renderImageCell(cell, id, modelImage!, onImageLoaded);
 				imageContainer.appendChild(cell);
+				this.renderImageCell(cell, id, modelImage!, onImageLoaded);
 			});
 		};
 
-		const inferenceInput = await Promise.all(
+		const renderedImages = await Promise.all(
 			this.modelImageIds.map(renderContentAndGetInferenceInput)
 		);
-		await this.runInference(inferenceInput);
+		const imagesReady = renderedImages.filter(
+			(img) => img.modelImage.stage === Stage.ReadyForTraining
+		).length;
+
+		this.imagesReadyForTraining = imagesReady;
+		this.updateProgressDisplay();
+		await this.runInference(renderedImages);
 	}
 
 	private async runInference(
@@ -194,26 +214,58 @@ export abstract class VisionModelTrainerBase<
 					this.inputImageSize,
 					this.normRange
 				);
-				const predicitonResult = this.modelOutputsToPredictionResult(
+				const predictionResult = this.modelOutputsToPredictionResult(
 					outputs,
 					inferenceSession
 				);
-				modelImage.predictionResult = predicitonResult;
-				await this.repository.updateImageData(id, modelImage);
-				this.updatePredictionResult(container, id, predicitonResult);
+				await this.updateImageData(id, {
+					predictionResult,
+				});
+				this.updatePredictionResult(container, id, predictionResult);
 			}
+		}
+		await inferenceSession.release();
+	}
+
+	private updateProgressDisplay() {
+		const progressElement = document.querySelector(
+			"#reviewProgress"
+		) as HTMLProgressElement;
+		const progressTextElement = document.querySelector(
+			"#reviewProgressText"
+		) as HTMLDivElement;
+
+		progressElement.value = this.imagesReadyForTraining;
+		progressElement.max = this.modelImageIds.length;
+
+		if (this.modelImageIds.length === 0) {
+			progressTextElement.innerText = `No images available`;
+		} else if (this.imagesReadyForTraining === this.modelImageIds.length) {
+			progressTextElement.innerText = `All images reviewed!`;
+		} else {
+			progressTextElement.innerText = `${this.imagesReadyForTraining}/${this.modelImageIds.length} images reviewed`;
 		}
 	}
 
 	private render(): string {
 		return `
             <div>
-                <label for="imageInput" class="button is-primary">Select Images</label>
-                <input id="imageInput" accept="image/*" type="file" class="input" style="visibility:hidden;" multiple>
+				<div class="is-flex is-flex-wrap-nowrap is-justify-content-space-between">
+					<div>
+                		<label for="imageInput" class="button is-primary">Select Images</label>
+						<input id="imageInput" accept="image/*" type="file" class="input" style="visibility:hidden;" multiple>
+					</div>
+					<div style="width:20em;">
+						<div class="pb-2 pr-2 is-pulled-right">
+							<span id="reviewProgressText"></span>
+						</div>
+						<div>
+							<progress id="reviewProgress" class="progress is-primary is-medium is-dark"></progress>
+						</div>
+					</div>
+				</div>
                 <div class="block">
-                    <div class="fixed-grid has-${this.numColumns}-cols">
-                        <div class="grid" id="imageContainer" />
-                    <div>
+                    <div class="grid is-col-min-${this.columnSize}" id="imageContainer" />
                 </div>
             </div>
       `;

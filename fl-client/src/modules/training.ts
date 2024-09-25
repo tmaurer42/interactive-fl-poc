@@ -41,6 +41,9 @@ export async function createTrainingSession(
 	console.log("Resetting gradients");
 	await session.lazyResetGrad();
 	console.log("Training finished");
+	const params = await session.getContiguousParameters(true);
+
+	console.log(params);
 
 	return session;
 }

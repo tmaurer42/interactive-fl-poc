@@ -6,9 +6,9 @@ export enum Stage {
 }
 
 export interface ModelImage<T extends KeyValuePairs> {
-	imageData: string; // Base64 encoded image data
+	imageData: string;
 	stage: Stage;
-	metadata: KeyValuePairs; // Metadata associated with the image
+	metadata: KeyValuePairs;
 	predictionResult?: T;
 }
 
@@ -16,9 +16,8 @@ export type ModelImageCreateInput<T extends KeyValuePairs> = Omit<
 	ModelImage<T>,
 	"id"
 >;
-export type ModelImageUpdateInput<T extends KeyValuePairs> = Omit<
-	ModelImage<T>,
-	"imageData"
+export type ModelImageUpdateInput<T extends KeyValuePairs> = Partial<
+	Omit<ModelImage<T>, "imageData">
 >;
 
 export class ImageRepository {
@@ -150,8 +149,10 @@ export class ImageRepository {
 			request.onsuccess = () => {
 				const image = request.result as ModelImage<any>;
 				if (image) {
-					image.metadata = input.metadata;
-					image.predictionResult = input.predictionResult;
+					image.metadata = input.metadata ?? image.metadata;
+					image.predictionResult =
+						input.predictionResult ?? image.predictionResult;
+					image.stage = input.stage ?? image.stage;
 					const updateRequest = objectStore.put(image, id);
 
 					updateRequest.onsuccess = () => {
