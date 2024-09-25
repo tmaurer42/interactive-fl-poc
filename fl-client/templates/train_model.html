@@ -1,20 +1,14 @@
 {% extends 'base.html' %} {% block content %}
-<section class="section">
-  <div class="container">
-    <div class="box">
-      <classification-model-trainer 
-        id="trainer" 
-        object-store-name="{{model.id}}"
-        model-url="/download/{{model.file}}"
-        training-model-url="/download/{{model.training_file}}"
-        optimizer-model-url="/download/{{model.optimizer_file}}"
-        eval-model-url="/download/{{model.eval_file}}"
-        checkpoint-url="/download/{{model.checkpoint_file}}"
-        input-image-size="{{model.input_size}}"
-        norm-range="{{model.norm_range[0]}},{{model.norm_range[1]}}"
-      >
-      </image-uploader>
-    </div>
-  </div>
-</section>
+  <classification-model-trainer 
+    id="trainer" 
+    object-store-name="{{model.id}}"
+    model-url="/download/{{model.file}}"
+    training-model-url="/download/{{model.training_file}}"
+    optimizer-model-url="/download/{{model.optimizer_file}}"
+    eval-model-url="/download/{{model.eval_file}}"
+    checkpoint-url="/download/{{model.checkpoint_file}}"
+    input-image-size="{{model.input_size}}"
+    norm-range="{{model.norm_range[0]}},{{model.norm_range[1]}}"
+  >
+  </classification-model-trainer>
 {% endblock %}

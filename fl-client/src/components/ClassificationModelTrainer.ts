@@ -3,6 +3,7 @@ import ort, { InferenceSession } from "onnxruntime-web";
 import { VisionModelTrainerBase } from "./VisionModelTrainerBase";
 import { KeyValuePairs, ModelImage, Stage } from "modules/ImageRepository";
 import * as postprocessing from "modules/utils/postprocessing";
+import { ImageClassificationCard } from "./ImageCard";
 
 type ClassificationResult = {
 	label: string;
@@ -10,6 +11,9 @@ type ClassificationResult = {
 
 export class ClassificationModelTrainer extends VisionModelTrainerBase<ClassificationResult> {
 	private classes = ["AMD", "NO"];
+
+	protected override uploadButtonHintText = `
+		Please provide images for the following classes: ${this.classes.join(", ")}`;
 
 	constructor() {
 		super();
@@ -33,63 +37,41 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 		modelImage: ModelImage<KeyValuePairs>,
 		onImageLoaded: (imgElement: HTMLImageElement) => void
 	) {
-		const labelElement = document.createElement("label");
-		labelElement.id = `img-label-${imageId}`;
+		const imageCard = document.createElement(
+			"image-card"
+		) as ImageClassificationCard;
+		imageCard.data = {
+			imageId,
+			modelImage,
+			classes: this.classes,
+			onImageLoaded,
+			renderLabel: this.renderLabel,
+		};
 
-		if (modelImage.predictionResult?.label) {
-			labelElement.innerHTML = modelImage.predictionResult.label;
-		}
+		imageCard.addEventListener("accept-label", (event: any) => {
+			const { imageId } = event.detail;
+			this.updateImageData(imageId, {
+				stage: Stage.ReadyForTraining,
+			}).then(() => this.updateProgressDisplay());
+		});
 
-		const label = modelImage.predictionResult?.label ?? "";
-		const imgContainer = document.createElement("div");
-		imgContainer.classList.add();
-		const imgElement = document.createElement("img");
-		imgElement.style.maxHeight = "100%";
-		imgElement.id = `img-${imageId}`;
-		imgElement.onload = () => onImageLoaded(imgElement);
-		imgElement.src = modelImage.imageData;
+		imageCard.addEventListener("change-label", (event: any) => {
+			const { imageId, newLabel } = event.detail;
+			this.updateImageData(imageId, {
+				predictionResult: {
+					label: newLabel,
+				},
+				stage: Stage.ReadyForTraining,
+			}).then(() => this.updateProgressDisplay());
+		});
 
-		const imageHeight = 13;
+		imageCard.addEventListener("delete-image", async (event: any) => {
+			const { imageId } = event.detail;
+			await this.deleteImage(imageId);
+			container.remove();
+		});
 
-		container.innerHTML = `
-			<div class="card">
-				<div class="card-content">
-    				<div 
-						class="content is-flex is-justify-content-center is-align-items-center"
-						style="height:${imageHeight}em;"
-					>
-						${imgElement.outerHTML}
-					</div>
-				</div>
-				<footer class="card-footer">
-						<label class="card-footer-item">
-							<strong>
-								${this.renderLabel(imageId, label, modelImage.stage).outerHTML}
-							</strong>
-						</label>
-						<a class="card-footer-item">
-							<div class="buttons">
-								<button 
-									id="btn-accept-img-label-${imageId}" 
-									class="button is-success"
-									title="Confirm label"
-								>
-									&#10004;
-								</button>
-								<button 
-									id="btn-change-img-label-${imageId}" 
-									class="button is-warning"
-									title="Change label"
-								>
-									&#9998;
-								</button>
-							</div>
-						</a>
-				</footer>
-			</div>
-		`;
-
-		this.bindImageEvents(imageId);
+		container.appendChild(imageCard);
 	}
 
 	protected override updatePredictionResult(
@@ -98,19 +80,20 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 		predicitonResult: any
 	) {
 		const labelElement = container.querySelector(
-			`label`
-		) as HTMLLabelElement;
-		labelElement.innerHTML = predicitonResult.label;
+			`#img-label-${imageId}`
+		) as HTMLSpanElement;
+		labelElement.innerText = predicitonResult.label;
 	}
 
 	protected override updateInferenceLoading(
 		container: Pick<HTMLDivElement, "querySelector">,
+		imageId: number,
 		message: string
 	) {
 		const labelElement = container.querySelector(
-			`label`
-		) as HTMLLabelElement;
-		labelElement.innerHTML = message;
+			`#img-label-${imageId}`
+		) as HTMLSpanElement;
+		labelElement.innerText = message;
 	}
 
 	protected override modelOutputsToPredictionResult(
@@ -129,78 +112,6 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 
 		return {
 			label: results[0].label,
-		};
-	}
-
-	private bindImageEvents(imageId: number): void {
-		const acceptLabelBtn = document.querySelector(
-			`#btn-accept-img-label-${imageId}`
-		) as HTMLButtonElement;
-
-		const changeLabelBtn = document.querySelector(
-			`#btn-change-img-label-${imageId}`
-		) as HTMLButtonElement;
-
-		const possibleLabels = this.classes;
-
-		acceptLabelBtn.onclick = () => {
-			const labelElement = document.querySelector(
-				`#img-label-${imageId}`
-			) as HTMLSpanElement;
-
-			acceptLabelBtn.disabled = true;
-			changeLabelBtn.disabled = false;
-
-			this.updateImageData(imageId, { stage: Stage.ReadyForTraining });
-			this.incrementProgress();
-			labelElement.classList.add("has-text-success");
-		};
-
-		changeLabelBtn.onclick = () => {
-			const labelElement = document.querySelector(
-				`#img-label-${imageId}`
-			) as HTMLSpanElement;
-
-			acceptLabelBtn.disabled = true;
-			changeLabelBtn.disabled = true;
-
-			const dropdownWrapper = document.createElement("div");
-			dropdownWrapper.classList.add("select");
-			const dropdown = document.createElement("select");
-			dropdown.id = `dropdown-label-${imageId}`;
-			possibleLabels.forEach((label) => {
-				const option = document.createElement("option");
-				option.value = label;
-				option.textContent = label;
-				if (label === labelElement.innerText) {
-					option.selected = true;
-				}
-				dropdown.appendChild(option);
-			});
-			dropdownWrapper.appendChild(dropdown);
-
-			labelElement.replaceWith(dropdownWrapper);
-
-			dropdown.onchange = () => {
-				const newLabel = dropdown.value;
-				this.updateImageData(imageId, {
-					predictionResult: {
-						label: newLabel,
-					},
-					stage: Stage.ReadyForTraining,
-				});
-				this.incrementProgress();
-
-				const newLabelElement = this.renderLabel(
-					imageId,
-					newLabel,
-					Stage.ReadyForTraining
-				);
-				dropdownWrapper.replaceWith(newLabelElement);
-
-				acceptLabelBtn.disabled = true;
-				changeLabelBtn.disabled = false;
-			};
 		};
 	}
 }

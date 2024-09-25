@@ -31,13 +31,14 @@ export abstract class VisionModelTrainerBase<
 
 	private repository: ImageRepository;
 	private modelImageIds: number[] = [];
-	private imagesReadyForTraining = 0;
 	private columnSize: number = 12;
 
 	constructor() {
 		super();
 		this.repository = Repository;
 	}
+
+	protected abstract uploadButtonHintText: string;
 
 	protected abstract renderImageCell(
 		container: HTMLDivElement,
@@ -54,6 +55,7 @@ export abstract class VisionModelTrainerBase<
 
 	protected abstract updateInferenceLoading(
 		container: Pick<HTMLDivElement, "querySelector">,
+		imageId: number,
 		message: string
 	): void;
 
@@ -69,9 +71,42 @@ export abstract class VisionModelTrainerBase<
 		await this.repository.updateImageData(id, update);
 	}
 
-	protected incrementProgress() {
-		this.imagesReadyForTraining += 1;
-		this.updateProgressDisplay();
+	protected async deleteImage(id: number) {
+		await this.repository.deleteImage(id);
+	}
+
+	protected async updateProgressDisplay() {
+		const progressElement = document.querySelector(
+			"#reviewProgress"
+		) as HTMLProgressElement;
+		const progressTextElement = document.querySelector(
+			"#reviewProgressText"
+		) as HTMLDivElement;
+		const startTrainBtn = document.querySelector(
+			"#startTrainButton"
+		) as HTMLButtonElement;
+
+		const images = await this.repository.getAllImages();
+		const inProgress = images.filter(
+			(img) => img.stage === Stage.ReadyForTraining
+		).length;
+		const total = this.modelImageIds.length;
+		progressElement.value = inProgress;
+		progressElement.max = total;
+
+		if (total === 0) {
+			progressTextElement.innerText = `No images available`;
+			startTrainBtn.disabled = true;
+		} else if (inProgress === total) {
+			progressTextElement.innerText = `All images reviewed!`;
+			const startTrainBtn = document.querySelector(
+				"#startTrainButton"
+			) as HTMLButtonElement;
+			startTrainBtn.disabled = false;
+		} else {
+			progressTextElement.innerText = `${inProgress}/${total} images reviewed`;
+			startTrainBtn.disabled = true;
+		}
 	}
 
 	connectedCallback(): void {
@@ -191,11 +226,7 @@ export abstract class VisionModelTrainerBase<
 		const renderedImages = await Promise.all(
 			this.modelImageIds.map(renderContentAndGetInferenceInput)
 		);
-		const imagesReady = renderedImages.filter(
-			(img) => img.modelImage.stage === Stage.ReadyForTraining
-		).length;
 
-		this.imagesReadyForTraining = imagesReady;
 		this.updateProgressDisplay();
 		await this.runInference(renderedImages);
 	}
@@ -207,7 +238,11 @@ export abstract class VisionModelTrainerBase<
 		for (const input of inferenceInput) {
 			const { imgElement, id, modelImage, container } = input;
 			if (!modelImage.predictionResult) {
-				this.updateInferenceLoading(container, "Running Inference...");
+				this.updateInferenceLoading(
+					container,
+					id,
+					"Running Inference..."
+				);
 				const outputs = await runInference(
 					inferenceSession,
 					imgElement,
@@ -227,44 +262,30 @@ export abstract class VisionModelTrainerBase<
 		await inferenceSession.release();
 	}
 
-	private updateProgressDisplay() {
-		const progressElement = document.querySelector(
-			"#reviewProgress"
-		) as HTMLProgressElement;
-		const progressTextElement = document.querySelector(
-			"#reviewProgressText"
-		) as HTMLDivElement;
-
-		progressElement.value = this.imagesReadyForTraining;
-		progressElement.max = this.modelImageIds.length;
-
-		if (this.modelImageIds.length === 0) {
-			progressTextElement.innerText = `No images available`;
-		} else if (this.imagesReadyForTraining === this.modelImageIds.length) {
-			progressTextElement.innerText = `All images reviewed!`;
-		} else {
-			progressTextElement.innerText = `${this.imagesReadyForTraining}/${this.modelImageIds.length} images reviewed`;
-		}
-	}
-
 	private render(): string {
 		return `
             <div>
-				<div class="is-flex is-flex-wrap-nowrap is-justify-content-space-between">
+				<div class="block is-flex is-flex-wrap-nowrap is-justify-content-space-between">
 					<div>
-                		<label for="imageInput" class="button is-primary">Select Images</label>
-						<input id="imageInput" accept="image/*" type="file" class="input" style="visibility:hidden;" multiple>
+						<label for="imageInput" class="button is-primary">Select Images</label>
+						<input id="imageInput" accept="image/*" type="file" class="input" style="display:none;" multiple>
+						<div class="mt-2">${this.uploadButtonHintText}</div>
 					</div>
-					<div style="width:20em;">
-						<div class="pb-2 pr-2 is-pulled-right">
-							<span id="reviewProgressText"></span>
+					<div class="is-flex is-flex-wrap-nowrap">
+						<div style="width:20em;">
+							<div class="pb-2 pr-2 is-pulled-right">
+								<span id="reviewProgressText"></span>
+							</div>
+							<div>
+								<progress id="reviewProgress" class="progress is-primary is-medium is-dark"></progress>
+							</div>
 						</div>
 						<div>
-							<progress id="reviewProgress" class="progress is-primary is-medium is-dark"></progress>
+							<button id="startTrainButton" class="mt-2 ml-4 button is-info" disabled>Train</button>
 						</div>
 					</div>
 				</div>
-                <div class="block">
+                <div class="block" style="height:calc(100vh - 320px);overflow-y:scroll">
                     <div class="grid is-col-min-${this.columnSize}" id="imageContainer" />
                 </div>
             </div>

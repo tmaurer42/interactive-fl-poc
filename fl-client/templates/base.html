@@ -1,51 +1,35 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FL POC</title>
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static',filename='styles/bulma.min.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static',filename='styles/styles.css') }}"
-    />
-  </head>
-  <body>
-    <script>0</script>
-    <section class="section">
-      <div class="container">
-        <h1 class="title">This is my FL POC client app!</h1>
-        <p class="subtitle">It's gonna be <strong>great</strong>!</p>
-        <nav class="tabs">
-          <ul>
-            <li
-              class="{{ 'is-active' if request.path == url_for('index') else '' }}"
-            >
-              <a href="{{ url_for('index') }}">Home</a>
-            </li>
-            <li
-              class="{{ 'is-active' if request.path == url_for('test_model') else '' }}"
-            >
-              <a href="{{ url_for('test_model') }}">Test Model</a>
-            </li>
-            <li
-              class="{{ 'is-active' if request.path == url_for('train_model') else '' }}"
-            >
-              <a href="{{ url_for('train_model') }}">Train Model</a>
-            </li>
-          </ul>
-        </nav>
-      </div>
-      {% block content %}{% endblock %}
-    </section>
-    <script
-      type="module"
-      src="{{ url_for('static',filename='dist/index.js') }}"
-    ></script>
-  </body>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FL POC</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/bulma.min.css') }}" />
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/styles.css') }}" />
+</head>
+
+<body>
+  <script>0</script>
+  <div class="container">
+    <h1 class="title mt-6">InFL-UX</h1>
+    <p class="subtitle">Interactive Federated Learning with enhanced User Experience</p>
+    <nav class="tabs">
+      <ul>
+        <li class="{{ 'is-active' if request.path == url_for('index') else '' }}">
+          <a href="{{ url_for('index') }}">Home</a>
+        </li>
+        <li class="{{ 'is-active' if request.path == url_for('test_model') else '' }}">
+          <a href="{{ url_for('test_model') }}">Test Model</a>
+        </li>
+        <li class="{{ 'is-active' if request.path == url_for('train_model') else '' }}">
+          <a href="{{ url_for('train_model') }}">Train Model</a>
+        </li>
+      </ul>
+    </nav>
+    {% block content %}{% endblock %}
+  </div>
+  <script type="module" src="{{ url_for('static',filename='dist/index.js') }}"></script>
+</body>
+
 </html>
