@@ -1,6 +1,9 @@
 import ort, { InferenceSession } from "onnxruntime-web";
-
-import { createInferenceSession, runInference } from "modules";
+import {
+	createInferenceSession,
+	hasRequiredAttributes,
+	runInference,
+} from "modules";
 import {
 	ImageRepository,
 	KeyValuePairs,
@@ -20,7 +23,7 @@ type InferenceInput<T extends KeyValuePairs> = {
 export abstract class VisionModelTrainerBase<
 	TPredictionResult extends KeyValuePairs
 > extends HTMLElement {
-	private objectStoreNameAttribute = "object-store-name";
+	private taskIdAttribute = "task-id";
 	private modelUrlAttribute = "model-url";
 	private inputImageSizeAttribute = "input-image-size";
 	private normRangeAtribute = "norm-range";
@@ -73,6 +76,7 @@ export abstract class VisionModelTrainerBase<
 
 	protected async deleteImage(id: number) {
 		await this.repository.deleteImage(id);
+		this.modelImageIds = this.modelImageIds.filter((imgId) => imgId !== id);
 	}
 
 	protected async updateProgressDisplay() {
@@ -98,7 +102,7 @@ export abstract class VisionModelTrainerBase<
 			progressTextElement.innerText = `No images available`;
 			startTrainBtn.disabled = true;
 		} else if (inProgress === total) {
-			progressTextElement.innerText = `All images reviewed!`;
+			progressTextElement.innerText = `All ${total} images reviewed!`;
 			const startTrainBtn = document.querySelector(
 				"#startTrainButton"
 			) as HTMLButtonElement;
@@ -112,7 +116,7 @@ export abstract class VisionModelTrainerBase<
 	connectedCallback(): void {
 		if (
 			!hasRequiredAttributes(this, [
-				this.objectStoreNameAttribute,
+				this.taskIdAttribute,
 				this.modelUrlAttribute,
 				this.inputImageSizeAttribute,
 				this.normRangeAtribute,
@@ -135,14 +139,16 @@ export abstract class VisionModelTrainerBase<
 		this.innerHTML = this.render();
 		this.bindEvents();
 		this.repository
-			.initializeDB(this.getAttribute(this.objectStoreNameAttribute)!)
+			.initializeDB(this.getAttribute(this.taskIdAttribute)!)
 			.then(() => this.loadImages());
 	}
 
 	private loadImages(): void {
-		this.repository.getAllIds().then(async (ids) => {
-			this.modelImageIds = ids;
-			this.updateImageDisplay();
+		this.repository.getAllIds(Stage.Inference).then((ids1) => {
+			this.repository.getAllIds(Stage.ReadyForTraining).then((ids2) => {
+				this.modelImageIds = [...ids1, ...ids2];
+				this.updateImageDisplay();
+			});
 		});
 	}
 
@@ -157,6 +163,16 @@ export abstract class VisionModelTrainerBase<
 				imageInput.value = "";
 			}
 		};
+
+		const startTrainButton = this.querySelector(
+			"#startTrainButton"
+		) as HTMLButtonElement;
+		startTrainButton.onclick = () => this.openTrainerModal();
+
+		const trainerModal = document.querySelector("#trainer");
+		trainerModal?.addEventListener("training-finished", () => {
+			this.loadImages();
+		});
 	}
 
 	private handleFiles(files: FileList): void {
@@ -206,6 +222,7 @@ export abstract class VisionModelTrainerBase<
 		): Promise<InferenceInput<TPredictionResult>> => {
 			const modelImage =
 				await this.repository.getImage<TPredictionResult>(id);
+
 			const cell = document.createElement("div");
 			cell.classList.add("cell");
 
@@ -262,6 +279,11 @@ export abstract class VisionModelTrainerBase<
 		await inferenceSession.release();
 	}
 
+	private openTrainerModal() {
+		const trainerModal = document.querySelector("#trainer");
+		trainerModal?.setAttribute("is-active", "");
+	}
+
 	private render(): string {
 		return `
             <div>
@@ -291,22 +313,4 @@ export abstract class VisionModelTrainerBase<
             </div>
       `;
 	}
-}
-
-function hasRequiredAttributes(
-	element: HTMLElement,
-	attributes: string[]
-): boolean {
-	let result = true;
-
-	for (const attribute of attributes) {
-		if (!element.hasAttribute(attribute)) {
-			console.error(
-				`missing attribute in ${element.localName}: ${attribute}`
-			);
-			result = false;
-		}
-	}
-
-	return result;
 }

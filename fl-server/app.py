@@ -2,11 +2,9 @@ import io
 from mimetypes import guess_type
 import os
 from flask import Flask, request, jsonify, send_file
-from ml.models.mobilenet import get_mobilenet
-# from ml.onnx import model_to_onnx
-from ml.onnx import model_to_onnx
-from model.fl_model_base import FLModel
-from model.fl_model_fedbuff import FedBuffFLModel
+from ml.mobilenet import get_mobilenet
+from ml.onnx_utils import model_to_onnx
+from fl.fl_task import ClassificationFLTask, FLTaskBase
 from storage.file_system_storage import FileSystemStorage
 from storage.file_storage_interface import IFileStorage
 
@@ -21,8 +19,7 @@ storage: IFileStorage = FileSystemStorage()
 ##########
 ## Data ##
 ##########
-global_models: dict[str, FLModel] = {}
-clients = set()
+tasks: dict[str, FLTaskBase] = {}
 
 demo_model_id = 'mobilenet_pretrained_demo'
 demo_model_dir_internal = os.path.join(
@@ -30,26 +27,37 @@ demo_model_dir_internal = os.path.join(
     'models',
     demo_model_id
 )
+mobilenet = get_mobilenet(
+    num_classes=2, transfer_learning=True, dropout=0.2)
+trainable_param_names = [name for name,
+                         p in mobilenet.named_parameters() if p.requires_grad]
+
 if not os.path.exists(demo_model_dir_internal):
     model_to_onnx(
-        model=get_mobilenet(
-            num_classes=2, transfer_learning=True, dropout=0.2),
+        model=mobilenet,
         model_directory=demo_model_dir_internal
     )
 
 demo_model_dir = os.path.join('models', demo_model_id)
-global_models[demo_model_id] = FedBuffFLModel(
+task = ClassificationFLTask(
     id='mobilenet_pretrained_demo',
     title='MobileNet (pretrained) for cats and dogs',
-    classes=["cat", "dog"],
-    file=os.path.join(demo_model_dir, "model.onnx"),
+    aggregator="fedasync",
+    aggregator_params={'mixing_param': 0.5},
+    classes=["Cat", "Dog"],
+    model_version=0,
+    model_file=os.path.join(demo_model_dir, "model.onnx"),
     training_file=os.path.join(demo_model_dir, "training_model.onnx"),
     optimizer_file=os.path.join(demo_model_dir, "optimizer_model.onnx"),
     eval_file=os.path.join(demo_model_dir, "eval_model.onnx"),
     checkpoint_file=os.path.join(demo_model_dir, "checkpoint"),
+    local_epochs=10,
+    batch_size=16,
     input_size=224,
-    norm_range=[-1,1]
+    norm_range=[-1, 1]
 )
+task.trainable_parameter_names = trainable_param_names
+tasks[demo_model_id] = task
 
 
 ############
@@ -70,42 +78,38 @@ def download(filepath: str):
         io.BytesIO(file_bytes),
         as_attachment=True,
         download_name=file_name,
-        mimetype=mime_type)
+        mimetype=mime_type
+    )
 
 
-# Client registration
-# Does nothing for now
-@api.route('/api/register', methods=['POST'])
-def register():
-    client_id = request.json['clientId']
-    clients.add(client_id)
+# Get an FL task
+@api.route('/api/tasks/<task_id>', methods=['GET'])
+def get_task(task_id):
+    task = tasks.get(task_id, None)
+    if task is None:
+        return {'message': 'Task not found'}, 404
 
-    return {'message': f'Client {client_id} registered'}
-
-
-# Get global model
-@api.route('/api/global-model/<model_id>', methods=['GET'])
-def get_model(model_id):
-    global_model = global_models.get(model_id, None)
-    if global_model is None:
-        return {'message': 'Model not found'}, 404
-
-    return jsonify(vars(global_model))
+    return jsonify(vars(task))
 
 
 # Endpoint for clients to send their local model
-@api.route('/api/local-model', methods=['POST'])
+@api.route('/api/model', methods=['POST'])
 def update_model():
-    model_id = request.json['modelId']
+    task_id = request.json['task_id']
     update = request.json['update']
+    model_version = request.json['model_version']
 
-    global_model = global_models.get(model_id, None)
-    if global_model is None:
-        return {'message': 'Model with id {model_id} not found'}, 404
+    task = tasks.get(task_id, None)
+    if task is None:
+        return {'message': 'Task with id {taskId} not found'}, 404
 
-    global_model.handleUpdate(update)
+    task.handleUpdate(
+        update,
+        model_version,
+        storage,
+    )
 
-    return {'message': f'Model update received'}
+    return {'message': f'Model for task update received'}
 
 
 port = 5002

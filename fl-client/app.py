@@ -4,7 +4,7 @@ import io
 from mimetypes import guess_type
 
 import requests
-from flask import Flask, make_response, render_template, send_file, send_from_directory
+from flask import Flask, jsonify, make_response, render_template, request, send_file, send_from_directory
 
 
 app = Flask(__name__)
@@ -20,33 +20,44 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/test-model')
-def test_model():
-    model_id = "mobilenet_pretrained"
-    resp = requests.get(f"{config['ServerUrl']}/api/global-model/{model_id}")
-    model = resp.json()
-    download_url = model['uri']
-    input_size = model['input_size']
-    norm_range = model['norm_range']
-
-    return render_template('test_model.html', 
-        model_url=download_url,
-        input_size=input_size,
-        scale_range=norm_range)
-
-
 @app.route('/train-model')
-def train_model():
-    model_id = "mobilenet_pretrained_demo"
-    resp = requests.get(f"{config['ServerUrl']}/api/global-model/{model_id}")
-    model = resp.json()
+def train_model_get():
+    task_id = "mobilenet_pretrained_demo"
+    resp = requests.get(f"{config['ServerUrl']}/api/tasks/{task_id}")
+    task = resp.json()
 
-    return render_template('train_model.html', model=model)
+    return render_template('train_model.html', task=task)
 
 
-@app.route('/hello')
-def hello():
-    return 'Hello, World!'
+@app.route('/train-model', methods=['POST'])
+def train_model_post():
+    data = request.get_json()
+    
+    task_id = data.get('task_id')
+    update: dict[str, float] = data.get('update') 
+    model_version: int = data.get('model_version')
+
+    if task_id is None or update is None or model_version is None:
+        return jsonify({'message': 'task_id, update and model_version are required'}), 400
+
+    requests.post(f"{config['ServerUrl']}/api/model", json={
+        'task_id': task_id,
+        'update': update,
+        'model_version': model_version
+    })
+
+    return jsonify({
+        'message': f'Update received for task {task_id}'
+    }), 200
+
+
+@app.route('/my_dataset')
+def my_dataset_get():
+    task_id = "mobilenet_pretrained_demo"
+    resp = requests.get(f"{config['ServerUrl']}/api/tasks/{task_id}")
+    task = resp.json()
+
+    return render_template('my_dataset.html', task=task)
 
 
 @app.route('/static/<path:path>')
@@ -74,6 +85,7 @@ def download(filepath: str):
         )
     )
 
+    """
     last_modified = datetime.now()
     etag = f'{hash(file_bytes)}-{last_modified.timestamp()}'
     expires = last_modified + timedelta(seconds=3600)
@@ -82,6 +94,7 @@ def download(filepath: str):
     response.headers['Last-Modified'] = last_modified.strftime("%a, %d %b %Y %H:%M:%S GMT")
     response.headers['ETag'] = etag
     response.headers['Expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    """
 
     return response
 

@@ -3,6 +3,7 @@ export type KeyValuePairs = { [key: string]: any };
 export enum Stage {
 	Inference,
 	ReadyForTraining,
+	Trained,
 }
 
 export interface ModelImage<T extends KeyValuePairs> {
@@ -47,7 +48,7 @@ export class ImageRepository {
 				const db = (event.target as IDBRequest).result as IDBDatabase;
 				db.createObjectStore(this.objectStoreName, {
 					autoIncrement: true,
-				});
+				}).createIndex("stage", "stage");
 			};
 
 			request.onsuccess = (event: Event) => {
@@ -107,7 +108,9 @@ export class ImageRepository {
 		});
 	}
 
-	getAllIds(): Promise<number[]> {
+	public getImagesByIds<T extends KeyValuePairs>(
+		ids: number[]
+	): Promise<(ModelImage<T> | undefined)[]> {
 		return new Promise((resolve, reject) => {
 			if (!this.db) {
 				return reject("Database not initialized");
@@ -118,7 +121,50 @@ export class ImageRepository {
 				"readonly"
 			);
 			const objectStore = transaction.objectStore(this.objectStoreName);
-			const request = objectStore.getAllKeys();
+
+			const promises = ids.map(
+				(id) =>
+					new Promise<ModelImage<T> | undefined>(
+						(resolve, reject) => {
+							const request = objectStore.get(id);
+
+							request.onsuccess = () => {
+								resolve(request.result as ModelImage<T>);
+							};
+
+							request.onerror = (event: Event) => {
+								reject((event.target as IDBRequest).error);
+							};
+						}
+					)
+			);
+
+			Promise.all(promises)
+				.then((results) => resolve(results))
+				.catch((error) => reject(error));
+		});
+	}
+
+	getAllIds(stage?: Stage): Promise<number[]> {
+		return new Promise((resolve, reject) => {
+			if (!this.db) {
+				return reject("Database not initialized");
+			}
+
+			const transaction = this.db.transaction(
+				this.objectStoreName,
+				"readonly"
+			);
+			const objectStore = transaction.objectStore(this.objectStoreName);
+
+			let request = undefined;
+			if (stage !== undefined) {
+				const index = objectStore.index("stage");
+				const query = IDBKeyRange.only(stage);
+				request = index.getAllKeys(query);
+			} else {
+				request = objectStore.getAllKeys();
+			}
 
 			request.onsuccess = () => {
 				resolve(request.result as number[]);

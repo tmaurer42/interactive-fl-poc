@@ -1,22 +1,32 @@
 import ort, { InferenceSession } from "onnxruntime-web";
 
-import { VisionModelTrainerBase } from "./VisionModelTrainerBase";
+import { VisionModelTrainerBase } from "../base/VisionModelTrainerBase";
 import { KeyValuePairs, ModelImage, Stage } from "modules/ImageRepository";
 import * as postprocessing from "modules/utils/postprocessing";
 import { ImageClassificationCard } from "./ImageCard";
-
-type ClassificationResult = {
-	label: string;
-};
+import { ClassificationResult } from "./ClassificationResult";
 
 export class ClassificationModelTrainer extends VisionModelTrainerBase<ClassificationResult> {
-	private classes = ["AMD", "NO"];
+	private classesAttribute = "classes";
+	private classes: string[] = [];
 
-	protected override uploadButtonHintText = `
-		Please provide images for the following classes: ${this.classes.join(", ")}`;
+	protected override uploadButtonHintText = "";
 
 	constructor() {
 		super();
+	}
+
+	connectedCallback(): void {
+		if (!this.hasAttribute(this.classesAttribute)) {
+			this.innerHTML = "";
+			return;
+		}
+
+		this.classes = this.getAttribute(this.classesAttribute)!.split(",");
+
+		this.uploadButtonHintText = `
+			Please provide images for the following classes: ${this.classes.join(", ")}`;
+		super.connectedCallback();
 	}
 
 	private renderLabel(imageId: number, text: string, stage: Stage) {
@@ -67,7 +77,7 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 
 		imageCard.addEventListener("delete-image", async (event: any) => {
 			const { imageId } = event.detail;
-			await this.deleteImage(imageId);
+			this.deleteImage(imageId).then(() => this.updateProgressDisplay());
 			container.remove();
 		});
 

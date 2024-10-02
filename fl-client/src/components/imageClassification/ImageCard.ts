@@ -28,84 +28,11 @@ export class ImageClassificationCard extends HTMLElement {
 	}
 
 	connectedCallback() {
-		this.render();
-		this.bindImageEvents();
+		this.innerHTML = this.render();
+		this.bindEvents();
 	}
 
-	render() {
-		if (
-			!(
-				this.imageId &&
-				this.modelImage &&
-				this.classes &&
-				this.onImageLoaded &&
-				this.renderLabel
-			)
-		) {
-			this.innerHTML = "";
-			return;
-		}
-
-		const label = this.modelImage.predictionResult?.label ?? "";
-		const imgElement = document.createElement("img");
-		imgElement.style.maxHeight = "100%";
-		imgElement.id = `img-${this.imageId}`;
-		imgElement.onload = () => this.onImageLoaded?.(imgElement);
-		imgElement.src = this.modelImage.imageData;
-
-		const imageHeight = 10;
-
-		this.innerHTML = `
-			<div class="card" id="image-card-${this.imageId}">
-				<div>
-					<button 
-						id="btn-delete-img-${this.imageId}" 
-						class="card-header-icon has-text-grey-dark" 
-						title="Delete image"
-						style="float:right;"
-					>
-						&#10005;
-					</button>
-				</div>
-				<div class="card-content">
-    				<div 
-						class="content is-flex is-justify-content-center is-align-items-center"
-						style="height:${imageHeight}em;"
-					>
-						${imgElement.outerHTML}
-					</div>
-				</div>
-				<footer class="card-footer">
-					<label class="card-footer-item">
-						<strong>
-							${this.renderLabel(this.imageId, label, this.modelImage.stage).outerHTML}
-						</strong>
-					</label>
-					<a class="card-footer-item">
-						<div class="buttons are-small">
-							<button 
-								id="btn-accept-img-label-${this.imageId}" 
-								class="button is-success"
-								title="Confirm label"
-								${this.modelImage.stage === Stage.ReadyForTraining ? "disabled" : ""}
-							>
-								&#10004;
-							</button>
-							<button 
-								id="btn-change-img-label-${this.imageId}" 
-								class="button is-warning"
-								title="Change label"
-							>
-								&#9998;
-							</button>
-						</div>
-					</a>
-				</footer>
-			</div>
-		`;
-	}
-
-	bindImageEvents() {
+	bindEvents() {
 		const acceptLabelBtn = this.querySelector(
 			`#btn-accept-img-label-${this.imageId}`
 		) as HTMLButtonElement;
@@ -198,6 +125,78 @@ export class ImageClassificationCard extends HTMLElement {
 		this.classes = classes;
 		this.onImageLoaded = onImageLoaded;
 		this.renderLabel = renderLabel;
-		this.render();
+		this.innerHTML = this.render();
+	}
+
+	render() {
+		if (
+			!(
+				this.imageId &&
+				this.modelImage &&
+				this.classes &&
+				this.onImageLoaded &&
+				this.renderLabel
+			)
+		) {
+			return "";
+		}
+
+		const label = this.modelImage.predictionResult?.label ?? "";
+		const imgElement = document.createElement("img");
+		imgElement.style.maxHeight = "100%";
+		imgElement.id = `img-${this.imageId}`;
+		imgElement.onload = () => this.onImageLoaded?.(imgElement);
+		imgElement.src = this.modelImage.imageData;
+
+		const imageHeight = 10;
+
+		return `
+			<div class="card" id="image-card-${this.imageId}">
+				<div>
+					<button 
+						id="btn-delete-img-${this.imageId}" 
+						class="card-header-icon has-text-grey-dark" 
+						title="Delete image"
+						style="float:right;"
+					>
+						&#10005;
+					</button>
+				</div>
+				<div class="card-content">
+    				<div 
+						class="content is-flex is-justify-content-center is-align-items-center"
+						style="height:${imageHeight}em;"
+					>
+						${imgElement.outerHTML}
+					</div>
+				</div>
+				<footer class="card-footer">
+					<label class="card-footer-item">
+						<strong>
+							${this.renderLabel(this.imageId, label, this.modelImage.stage).outerHTML}
+						</strong>
+					</label>
+					<a class="card-footer-item">
+						<div class="buttons are-small">
+							<button 
+								id="btn-accept-img-label-${this.imageId}" 
+								class="button is-success"
+								title="Confirm label"
+								${this.modelImage.stage === Stage.ReadyForTraining ? "disabled" : ""}
+							>
+								&#10004;
+							</button>
+							<button 
+								id="btn-change-img-label-${this.imageId}" 
+								class="button is-warning"
+								title="Change label"
+							>
+								&#9998;
+							</button>
+						</div>
+					</a>
+				</footer>
+			</div>
+		`;
 	}
 }

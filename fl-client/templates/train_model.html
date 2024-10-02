@@ -1,14 +1,26 @@
 {% extends 'base.html' %} {% block content %}
   <classification-model-trainer 
-    id="trainer" 
-    object-store-name="{{model.id}}"
-    model-url="/download/{{model.file}}"
-    training-model-url="/download/{{model.training_file}}"
-    optimizer-model-url="/download/{{model.optimizer_file}}"
-    eval-model-url="/download/{{model.eval_file}}"
-    checkpoint-url="/download/{{model.checkpoint_file}}"
-    input-image-size="{{model.input_size}}"
-    norm-range="{{model.norm_range[0]}},{{model.norm_range[1]}}"
+    task-id="{{task.id}}"
+    model-url="/download/{{task.model_file}}"
+    classes="{{task.classes|join(',')}}"
+    input-image-size="{{task.input_size}}"
+    norm-range="{{task.norm_range[0]}},{{task.norm_range[1]}}"
   >
   </classification-model-trainer>
+  <classification-trainer-modal
+    id="trainer"
+    task-id="{{task.id}}"
+    model-version="{{task.model_version}}"
+    training-model-url="/download/{{task.training_file}}"
+    optimizer-model-url="/download/{{task.optimizer_file}}"
+    eval-model-url="/download/{{task.eval_file}}"
+    checkpoint-url="/download/{{task.checkpoint_file}}"
+    classes="{{task.classes|join(',')}}"
+    n-epochs="{{task.local_epochs}}"
+    batch-size="{{task.batch_size}}"
+    input-image-size="{{task.input_size}}"
+    norm-range="{{task.norm_range[0]}},{{task.norm_range[1]}}"
+  >
+
+  </classification-trainer-modal>
 {% endblock %}

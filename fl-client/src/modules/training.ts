@@ -1,5 +1,49 @@
 import ort, { Tensor } from "onnxruntime-web/training";
-import { fetchAsUint8Array, preprocessImage } from "./utils";
+import { fetchAsUint8Array, getFirstMatchingProperty } from "./utils";
+
+export type ImageLabelPair = {
+	image: string;
+	label: string;
+};
+
+export type TrainStepResult = {
+	loss: number;
+};
+
+export function* batchify<T>(array: T[], batchSize: number) {
+	const numBatches = Math.ceil(array.length / batchSize);
+
+	for (let i = 0; i < numBatches; i++) {
+		yield array.slice(i * batchSize, i * batchSize + batchSize);
+	}
+}
+
+function getLoss(trainOutput: object): number {
+	const lossTensor = getFirstMatchingProperty(trainOutput, "onnx::loss::");
+	const loss = parseFloat(lossTensor.data);
+
+	return loss;
+}
+
+export async function runTrainStep(
+	session: ort.TrainingSession,
+	x: Tensor,
+	y: Tensor
+): Promise<TrainStepResult> {
+	const feeds = {
+		input: x,
+		labels: y,
+	};
+	const trainResult = await session.runTrainStep(feeds);
+	await session.runOptimizerStep();
+	await session.lazyResetGrad();
+
+	const loss = getLoss(trainResult);
+
+	return {
+		loss,
+	};
+}
 
 export async function createTrainingSession(
 	trainingModelUrl: string,
@@ -21,29 +65,7 @@ export async function createTrainingSession(
 		checkpointState,
 	};
 
-	const session = await ort.TrainingSession.create(createOptions, {
-		extra: {
-			optimizer_config: {
-				learning_rate: 1.0,
-			},
-		},
-	});
-	const img = document.querySelector("img")!;
-	const tensor = preprocessImage(img, 224, [-1, 1]);
-	const feeds = {
-		input: tensor,
-		labels: new ort.Tensor("int64", [0], [1]),
-	};
-	const foo = await session.runTrainStep(feeds);
-	console.log(foo);
-	console.log("Running optimizer step");
-	await session.runOptimizerStep({});
-	console.log("Resetting gradients");
-	await session.lazyResetGrad();
-	console.log("Training finished");
-	const params = await session.getContiguousParameters(true);
-
-	console.log(params);
+	const session = await ort.TrainingSession.create(createOptions);
 
 	return session;
 }

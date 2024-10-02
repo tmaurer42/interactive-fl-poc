@@ -16,19 +16,6 @@ def get_mobilenet(
         for params in mobilenetv2_model.parameters():
             params.requires_grad = False
 
-        dense_layer_size = last_layer_input_size // 2
-        dense_layer_2_size = last_layer_input_size // 4
-        layers.extend([
-            nn.Linear(last_layer_input_size, dense_layer_size),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(dense_layer_size, dense_layer_2_size),
-            nn.ReLU(),
-            nn.Dropout(dropout)
-        ])
-
-        last_layer_input_size = dense_layer_2_size
-
     layers.append(nn.Linear(last_layer_input_size, num_classes))
 
     mobilenetv2_model.classifier[0] = nn.Dropout(dropout)
