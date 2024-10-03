@@ -33,6 +33,14 @@ export abstract class VisionTrainerModalBase<TProps> extends HTMLElement {
 		this.repository = Repository;
 	}
 
+	/**
+	 * Run the training process. This method uses a number of callbacks thay should be uses.
+	 * @param onTrainStart Call at the start of the training.
+	 * @param updateTrainingProgress Call after each epoch.
+	 * @param sendUpdate Call after training, when final parameters are available.
+	 * @param onTrainEnd Call at the end of the training.
+	 * @param updateProgressMessage Call whenever a new progress should be reported to the user.
+	 */
 	protected abstract train(
 		onTrainStart: () => void,
 		updateTrainingProgress: (epoch: number, loss: number) => void,

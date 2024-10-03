@@ -34,8 +34,19 @@ export abstract class VisionModelTrainerBase<
 		this.repository = Repository;
 	}
 
+	/**
+	 * Hint text to display next to the upload button.
+	 */
 	protected abstract uploadButtonHintText: string;
 
+	/**
+	 * Render the cell for one image into the provided container.
+	 * When the image has loaded, onImageLoaded needs to be called.
+	 * @param container The container in which to render the image component.
+	 * @param imageId Database id of the image.
+	 * @param modelImage Data of the image.
+	 * @param onImageLoaded Callback when image has loaded in the DOM.
+	 */
 	protected abstract renderImageCell(
 		container: HTMLDivElement,
 		imageId: number,
@@ -43,11 +54,24 @@ export abstract class VisionModelTrainerBase<
 		onImageLoaded: (imgElement: HTMLImageElement) => void
 	): void;
 
+	/**
+	 * Run model inference with the given session on the input.
+	 * The input contains the id, image data, image element, and the container for the image.
+	 * An implementation should also handle updating the database and UI based
+	 * on the inference result.
+	 * @param session The inference session.
+	 * @param inferenceInput Input for the inference.
+	 */
 	protected abstract runInference(
 		session: ort.InferenceSession,
 		inferenceInput: InferenceInput<TPredictionResult>[]
 	): Promise<void>;
 
+	/**
+	 * Update an image in the database.
+	 * @param id Id of the image to update.
+	 * @param update Update data.
+	 */
 	protected async updateImageData(
 		id: number,
 		update: ModelImageUpdateInput<TPredictionResult>
@@ -55,11 +79,18 @@ export abstract class VisionModelTrainerBase<
 		await this.repository.updateImageData(id, update);
 	}
 
+	/**
+	 * Delete an image from the database.
+	 * @param id Id of the image to delete
+	 */
 	protected async deleteImage(id: number) {
 		await this.repository.deleteImage(id);
 		this.modelImageIds = this.modelImageIds.filter((imgId) => imgId !== id);
 	}
 
+	/**
+	 * Update the image review progress UI.
+	 */
 	protected async updateProgressDisplay() {
 		const progressElement = document.querySelector(
 			"#reviewProgress"

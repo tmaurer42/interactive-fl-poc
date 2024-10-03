@@ -23,6 +23,14 @@ export abstract class VisionDatasetDisplayBase<
 		this.repository = Repository;
 	}
 
+	/**
+	 * Render the cell for one image into the provided container.
+	 * When the image has loaded, onImageLoaded needs to be called.
+	 * @param container The container in which to render the image component.
+	 * @param imageId Database id of the image.
+	 * @param modelImage Data of the image.
+	 * @param onImageLoaded Callback when image has loaded in the DOM.
+	 */
 	protected abstract renderImageCell(
 		container: HTMLDivElement,
 		imageId: number,
@@ -30,6 +38,9 @@ export abstract class VisionDatasetDisplayBase<
 		onImageLoaded: (imgElement: HTMLImageElement) => void
 	): void;
 
+	/**
+	 * Determines what to render in the header area
+	 */
 	protected abstract renderHeader(): string;
 
 	connectedCallback(): void {
@@ -44,6 +55,10 @@ export abstract class VisionDatasetDisplayBase<
 			.then(() => this.loadImages());
 	}
 
+	/**
+	 * Load all images associated with this component.
+	 * After loading, calls updateImageDisplay().
+	 */
 	protected loadImages(): void {
 		this.repository.getAllIds(this.stage).then((ids) => {
 			this.imageIds = ids;
@@ -51,6 +66,9 @@ export abstract class VisionDatasetDisplayBase<
 		});
 	}
 
+	/**
+	 * Render all images currently stored in the component.
+	 */
 	protected async updateImageDisplay(): Promise<void> {
 		const imageContainer = this.querySelector(
 			"#imageContainer"

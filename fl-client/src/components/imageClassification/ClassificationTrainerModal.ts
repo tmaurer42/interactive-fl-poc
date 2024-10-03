@@ -76,8 +76,6 @@ export class ClassificationTrainerModal extends VisionTrainerModalBase<Classific
 		const trainIds = await this.repository.getAllIds(
 			Stage.ReadyForTraining
 		);
-		//const [ids, labels] = await this.loadData();
-		//const [trainIds, valIds] = stratifiedSplit(ids, labels, 0.2);
 
 		updateProgressMessage("Creating training session...");
 		const trainingSession = await createTrainingSession(
