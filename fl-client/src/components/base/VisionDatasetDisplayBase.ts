@@ -1,27 +1,27 @@
-import { hasRequiredAttributes } from "modules";
 import {
+	hasRequiredAttributes,
 	ImageRepository,
 	KeyValuePairs,
 	ModelImage,
 	Repository,
 	Stage,
-} from "modules/ImageRepository";
+} from "modules";
 
 export abstract class VisionDatasetDisplayBase<
 	TPredictionResult extends KeyValuePairs
 > extends HTMLElement {
 	private taskIdAttribute = "task-id";
 
-	private repository: ImageRepository;
-	private columnSize: number = 12;
-	private imageIds: number[] = [];
+	protected repository: ImageRepository;
+	protected imageIds: number[] = [];
+
+	protected columnSize: number = 8;
+	protected stage?: Stage = undefined;
 
 	constructor() {
 		super();
 		this.repository = Repository;
 	}
-
-	protected abstract headerText: string;
 
 	protected abstract renderImageCell(
 		container: HTMLDivElement,
@@ -30,6 +30,8 @@ export abstract class VisionDatasetDisplayBase<
 		onImageLoaded: (imgElement: HTMLImageElement) => void
 	): void;
 
+	protected abstract renderHeader(): string;
+
 	connectedCallback(): void {
 		if (!hasRequiredAttributes(this, [this.taskIdAttribute])) {
 			this.innerHTML = "";
@@ -37,22 +39,19 @@ export abstract class VisionDatasetDisplayBase<
 		}
 
 		this.innerHTML = this.render();
-		this.bindEvents();
 		this.repository
 			.initializeDB(this.getAttribute(this.taskIdAttribute)!)
 			.then(() => this.loadImages());
 	}
 
-	private bindEvents(): void {}
-
-	private loadImages(): void {
-		this.repository.getAllIds(Stage.Trained).then((ids) => {
+	protected loadImages(): void {
+		this.repository.getAllIds(this.stage).then((ids) => {
 			this.imageIds = ids;
 			this.updateImageDisplay();
 		});
 	}
 
-	private async updateImageDisplay(): Promise<void> {
+	protected async updateImageDisplay(): Promise<void> {
 		const imageContainer = this.querySelector(
 			"#imageContainer"
 		) as HTMLElement;
@@ -80,13 +79,11 @@ export abstract class VisionDatasetDisplayBase<
 	private render(): string {
 		return `
             <div>
-				<div class="block is-flex is-flex-wrap-nowrap is-justify-content-space-between">
-					<div>
-						<div class="mt-2">${this.headerText}</div>
-					</div>
-				</div>
+				${this.renderHeader()}
                 <div class="block" style="height:calc(100vh - 270px);overflow-y:scroll">
-                    <div class="grid is-col-min-${this.columnSize}" id="imageContainer" />
+                    <div class="grid is-col-min-${
+						this.columnSize
+					}" id="imageContainer" />
                 </div>
             </div>
       `;

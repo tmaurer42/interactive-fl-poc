@@ -68,6 +68,7 @@ def index():
     return jsonify({'secret_key': 'Hello World!!'})
 
 
+# Download endpoint for anything stored in the storage
 @api.route('/download/<path:filepath>', methods=['GET'])
 def download(filepath: str):
     file_bytes = storage.read(filepath)

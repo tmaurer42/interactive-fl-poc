@@ -6,6 +6,10 @@ def get_mobilenet(
     transfer_learning: bool = False,
     dropout=0.2,
 ) -> models.MobileNetV2:
+    """
+    Gets a mobilenet V2 model adapted to the number of classes.
+    When using transfer learning, uses the pretrained Imagenet V2 weights.
+    """
     weights = models.MobileNet_V2_Weights.IMAGENET1K_V2 if transfer_learning else None
     mobilenetv2_model = models.mobilenet_v2(weights=weights)
 

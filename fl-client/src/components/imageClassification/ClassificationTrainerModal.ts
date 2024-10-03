@@ -1,13 +1,16 @@
-import { preprocessImagesFromBase64, Stage } from "modules";
-import { hasRequiredAttributes, shuffleArray } from "modules/utils/helpers";
+import { VisionTrainerModalBase } from "components/base";
+import {
+	createTrainingSession,
+	preprocessImagesFromBase64,
+	Stage,
+} from "modules";
 import {
 	batchify,
-	createTrainingSession,
-	runTrainStep,
-} from "modules/training";
+	hasRequiredAttributes,
+	shuffleArray,
+} from "modules/utils/helpers";
 import { Tensor } from "onnxruntime-web";
 import { ClassificationResult } from "./ClassificationResult";
-import { VisionTrainerModalBase } from "components/base";
 
 type ClassificationTrainerModalProps = {
 	classes: string[];
@@ -111,9 +114,21 @@ export class ClassificationTrainerModal extends VisionTrainerModalBase<Classific
 				);
 				const y = new Tensor("int64", labels);
 
-				const batchResult = await runTrainStep(trainingSession, x, y);
-				runningLoss +=
-					batchResult.loss * (images.length / trainIds.length);
+				console.log(trainingSession.trainingInputNames);
+				console.log(trainingSession.trainingOutputNames);
+				const inputName = trainingSession.trainingInputNames[0];
+				const labelsName = trainingSession.trainingInputNames[2];
+
+				const feeds = {
+					[inputName]: x,
+					[labelsName]: y,
+				};
+
+				const result = await trainingSession.runTrainStep(feeds);
+				const lossName = trainingSession.trainingOutputNames[0];
+				const loss = result[lossName].data;
+
+				runningLoss += loss * (images.length / trainIds.length);
 				numBatches += 1;
 			}
 

@@ -1,5 +1,4 @@
 import configparser
-from datetime import datetime, timedelta
 import io
 from mimetypes import guess_type
 
@@ -60,6 +59,15 @@ def my_dataset_get():
     return render_template('my_dataset.html', task=task)
 
 
+@app.route('/test-model')
+def test_model_get():
+    task_id = "mobilenet_pretrained_demo"
+    resp = requests.get(f"{config['ServerUrl']}/api/tasks/{task_id}")
+    task = resp.json()
+
+    return render_template('test_model.html', task=task)
+
+
 @app.route('/static/<path:path>')
 def send_static(path):
     return send_from_directory('static', path)
@@ -84,17 +92,6 @@ def download(filepath: str):
             mimetype=mime_type
         )
     )
-
-    """
-    last_modified = datetime.now()
-    etag = f'{hash(file_bytes)}-{last_modified.timestamp()}'
-    expires = last_modified + timedelta(seconds=3600)
-
-    response.headers['Cache-Control'] = 'public, max-age=3600'
-    response.headers['Last-Modified'] = last_modified.strftime("%a, %d %b %Y %H:%M:%S GMT")
-    response.headers['ETag'] = etag
-    response.headers['Expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
-    """
 
     return response
 

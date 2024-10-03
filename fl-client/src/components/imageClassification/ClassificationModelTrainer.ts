@@ -1,14 +1,28 @@
 import ort, { InferenceSession } from "onnxruntime-web";
 
-import { VisionModelTrainerBase } from "../base/VisionModelTrainerBase";
-import { KeyValuePairs, ModelImage, Stage } from "modules/ImageRepository";
-import * as postprocessing from "modules/utils/postprocessing";
-import { ImageClassificationCard } from "./ImageCard";
+import * as postprocessing from "modules";
+import {
+	hasRequiredAttributes,
+	KeyValuePairs,
+	ModelImage,
+	runInference,
+	Stage,
+} from "modules";
+import {
+	InferenceInput,
+	VisionModelTrainerBase,
+} from "../base/VisionModelTrainerBase";
 import { ClassificationResult } from "./ClassificationResult";
+import { ImageClassificationCard } from "./ImageCard";
 
 export class ClassificationModelTrainer extends VisionModelTrainerBase<ClassificationResult> {
 	private classesAttribute = "classes";
+	private inputImageSizeAttribute = "input-image-size";
+	private normRangeAtribute = "norm-range";
+
 	private classes: string[] = [];
+	private inputImageSize: number = 224;
+	private normRange: [number, number] = [-1, 1];
 
 	protected override uploadButtonHintText = "";
 
@@ -17,12 +31,26 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 	}
 
 	connectedCallback(): void {
-		if (!this.hasAttribute(this.classesAttribute)) {
+		if (
+			!hasRequiredAttributes(this, [
+				this.classesAttribute,
+				this.inputImageSizeAttribute,
+				this.normRangeAtribute,
+			])
+		) {
 			this.innerHTML = "";
 			return;
 		}
 
 		this.classes = this.getAttribute(this.classesAttribute)!.split(",");
+		this.inputImageSize = parseInt(
+			this.getAttribute(this.inputImageSizeAttribute)!
+		);
+		const normRangeStr = this.getAttribute(this.normRangeAtribute)!;
+		this.normRange = normRangeStr.split(",").map((n) => parseInt(n)) as [
+			number,
+			number
+		];
 
 		this.uploadButtonHintText = `
 			Please provide images for the following classes: ${this.classes.join(", ")}`;
@@ -84,7 +112,31 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 		container.appendChild(imageCard);
 	}
 
-	protected override updatePredictionResult(
+	protected override async runInference(
+		inferenceSession: ort.InferenceSession,
+		inferenceInput: InferenceInput<ClassificationResult>[]
+	) {
+		for (const input of inferenceInput) {
+			const { imgElement, id, container } = input;
+			this.updateInferenceLoading(container, id, "Running Inference...");
+			const outputs = await runInference(
+				inferenceSession,
+				imgElement,
+				this.inputImageSize,
+				this.normRange
+			);
+			const predictionResult = this.modelOutputsToPredictionResult(
+				outputs,
+				inferenceSession
+			);
+			await this.updateImageData(id, {
+				predictionResult,
+			});
+			this.updatePredictionResult(container, id, predictionResult);
+		}
+	}
+
+	private updatePredictionResult(
 		container: Pick<HTMLDivElement, "querySelector">,
 		imageId: number,
 		predicitonResult: any
@@ -95,7 +147,7 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 		labelElement.innerText = predicitonResult.label;
 	}
 
-	protected override updateInferenceLoading(
+	private updateInferenceLoading(
 		container: Pick<HTMLDivElement, "querySelector">,
 		imageId: number,
 		message: string
@@ -106,7 +158,7 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 		labelElement.innerText = message;
 	}
 
-	protected override modelOutputsToPredictionResult(
+	private modelOutputsToPredictionResult(
 		outputs: ort.InferenceSession.OnnxValueMapType,
 		session: InferenceSession
 	) {
@@ -116,7 +168,7 @@ export class ClassificationModelTrainer extends VisionModelTrainerBase<Classific
 		);
 		var results = postprocessing.classesTopK(
 			outputSoftmax,
-			2,
+			Math.min(5, this.classes.length),
 			this.classes
 		);
 

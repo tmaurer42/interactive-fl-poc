@@ -1,9 +1,20 @@
 import { VisionDatasetDisplayBase } from "../base";
-import { ModelImage } from "modules/ImageRepository";
+import { ModelImage, Stage } from "modules";
 import { ClassificationResult } from "./ClassificationResult";
 
 export class ClassificationDatasetDisplay extends VisionDatasetDisplayBase<ClassificationResult> {
-	protected headerText = "Images already used for training";
+	private headerText = "Images already used for training";
+	protected stage = Stage.Trained;
+
+	protected renderHeader(): string {
+		return `
+			<div class="block is-flex is-flex-wrap-nowrap is-justify-content-space-between">
+				<div>
+					<div class="mt-2">${this.headerText}</div>
+				</div>
+			</div>
+		`;
+	}
 
 	protected renderImageCell(
 		container: HTMLDivElement,
@@ -36,7 +47,7 @@ export class ClassificationDatasetDisplay extends VisionDatasetDisplayBase<Class
 						</strong>
 					</label>
                 </footer>
-            </div
+            </div>
         `;
 
 		container.innerHTML = imageCard;

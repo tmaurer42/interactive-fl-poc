@@ -1,5 +1,4 @@
-import { ImageRepository, Repository } from "modules";
-import { hasRequiredAttributes } from "modules/utils/helpers";
+import { hasRequiredAttributes, ImageRepository, Repository } from "modules";
 
 type VisionTrainerModalBaseProps = {
 	taskId: string;

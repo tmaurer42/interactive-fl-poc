@@ -25,6 +25,9 @@
         <li class="{{ 'is-active' if request.path == url_for('my_dataset_get') else '' }}">
           <a href="{{ url_for('my_dataset_get') }}">My Training Dataset</a>
         </li>
+        <li class="{{ 'is-active' if request.path == url_for('test_model_get') else '' }}">
+          <a href="{{ url_for('test_model_get') }}">Test Model</a>
+        </li>
       </ul>
     </nav>
     {% block content %}{% endblock %}

@@ -32,7 +32,7 @@ export class ImageClassificationCard extends HTMLElement {
 		this.bindEvents();
 	}
 
-	bindEvents() {
+	private bindEvents() {
 		const acceptLabelBtn = this.querySelector(
 			`#btn-accept-img-label-${this.imageId}`
 		) as HTMLButtonElement;

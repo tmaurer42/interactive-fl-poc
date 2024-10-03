@@ -1,10 +1,12 @@
+import { fetchAsArrayBuffer, preprocessImage } from "modules";
 import ort, { Tensor } from "onnxruntime-web";
 import ortWebGPU from "onnxruntime-web/webgpu";
-import { fetchAsArrayBuffer } from "modules/utils/helpers";
-import { preprocessImage } from "modules/utils/preprocessing";
 
-export type SupportedModel = "SqueezeNet" | "MobileNet";
-
+/**
+ * Creates an inference session. WebGPU backend is used if available.
+ * @param modelUrl URL to the inference model file.
+ * @returns A promise that resolves with the inferecence session.
+ */
 export async function createInferenceSession(modelUrl: string) {
 	const model = await fetchAsArrayBuffer(modelUrl);
 	const supportsWebGPU = Boolean(navigator.gpu);
@@ -15,6 +17,14 @@ export async function createInferenceSession(modelUrl: string) {
 		: await ort.InferenceSession.create(model, { executionProviders });
 }
 
+/**
+ * Run inference on a HTMLImageElement.
+ * @param session The InferenceSession.
+ * @param imageElement The ImageElement.
+ * @param imageTargetSize Size tp which the image should be resized to
+ * @param normRange The normalization range for pixel values.
+ * @returns A promise that resolves with the models output.
+ */
 export const runInference = async (
 	session: ort.InferenceSession,
 	imageElement: HTMLImageElement,

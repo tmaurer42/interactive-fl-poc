@@ -4,13 +4,17 @@ from typing import Optional
 import torch
 import numpy as np
 import onnx
-from onnxruntime.training import artifacts, onnxblock
+from onnxruntime.training import artifacts
 
 
 def generate_training_artifacts(
     trainable_param_names: list[str],
-    model_file_path: bytes,
+    model_file_path: str
 ):
+    """
+    Generates training artifacts based on the model at the given file path.
+    Trainable parameter names need to be provided explicitly.
+    """
     onnx_model = onnx.load_model(model_file_path)
     model_directory = os.path.dirname(model_file_path)
 
@@ -24,7 +28,7 @@ def generate_training_artifacts(
 
     # We need to delete the two last outputs (running_mean, running_var)
     # from the BatchNorm layers in the eval model, keeping only the first output.
-    # Else, loading the training session will throw an error.
+    # Else, loading the training session on the client will throw an error.
     eval_model_path = os.path.join(model_directory, "eval_model.onnx")
     eval_model = onnx.load(eval_model_path)
     for node in eval_model.graph.node:
@@ -39,6 +43,11 @@ def model_to_onnx(
     base_model_name: Optional[str] = "model",
     training_artifacts: Optional[bool] = True
 ):
+    """
+    Exports a pytorch model to onnx in evaluation model.
+    Optionally, training articatcs for on-device training 
+    can be created in the same storage location.
+    """
     if not os.path.exists(model_directory):
         os.makedirs(model_directory)
 
@@ -47,28 +56,42 @@ def model_to_onnx(
     x = torch.randn(1, 3, 224, 224)
 
     model.eval()
-
     torch.onnx.export(
         model,
         x,
         f=file_path,
         export_params=True,
-        training=torch.onnx.TrainingMode.TRAINING,
+        training=torch.onnx.TrainingMode.EVAL,
         do_constant_folding=False,
         input_names=['input'],
         output_names=['output'],
         dynamic_axes={'input': {0: 'batch_size'},
-                      'output': {0: 'batch_size'}},
+                    'output': {0: 'batch_size'}},
         opset_version=14,
     )
 
-    trainable_param_names = [
-        name for name, param in model.named_parameters() if param.requires_grad]
-
     if training_artifacts:
+        train_base_model_file = os.path.join(model_directory, f"train_base_{base_model_file_name}")
+        torch.onnx.export(
+            model,
+            x,
+            f=train_base_model_file,
+            export_params=True,
+            training=torch.onnx.TrainingMode.TRAINING,
+            do_constant_folding=False,
+            input_names=['input'],
+            output_names=['output'],
+            dynamic_axes={'input': {0: 'batch_size'},
+                        'output': {0: 'batch_size'}},
+            opset_version=14,
+        )
+
+        trainable_param_names = [
+            name for name, param in model.named_parameters() if param.requires_grad]
+
         generate_training_artifacts(
             trainable_param_names,
-            file_path
+            train_base_model_file
         )
 
 
@@ -76,6 +99,10 @@ def get_parameters(
     model_file: bytes,
     trainable_param_names: list[str]
 ) -> list[float]:
+    """
+    Returns the parameters as a 1d array from an onnx model (as bytes).
+    Only the parameters from the provided trainable param names are returned.
+    """
     model = onnx.load_from_string(model_file)
     layers = model.graph.initializer
 
@@ -95,6 +122,11 @@ def set_parameters(
     params: list[float],
     trainable_param_names: list[str]
 ):
+    """
+    Sets parameters in a 1d array in the given onnx model (in bytes) in
+    the given trainable param names.
+    Returns the model with the new parameters.
+    """
     model = onnx.load_from_string(model_file)
     layers = model.graph.initializer
 

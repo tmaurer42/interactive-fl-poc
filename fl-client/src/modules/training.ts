@@ -1,50 +1,19 @@
-import ort, { Tensor } from "onnxruntime-web/training";
-import { fetchAsUint8Array, getFirstMatchingProperty } from "./utils";
+import ort from "onnxruntime-web/training";
+import { fetchAsUint8Array } from "./utils";
 
-export type ImageLabelPair = {
-	image: string;
-	label: string;
-};
-
-export type TrainStepResult = {
-	loss: number;
-};
-
-export function* batchify<T>(array: T[], batchSize: number) {
-	const numBatches = Math.ceil(array.length / batchSize);
-
-	for (let i = 0; i < numBatches; i++) {
-		yield array.slice(i * batchSize, i * batchSize + batchSize);
-	}
-}
-
-function getLoss(trainOutput: object): number {
-	const lossTensor = getFirstMatchingProperty(trainOutput, "onnx::loss::");
-	const loss = parseFloat(lossTensor.data);
-
-	return loss;
-}
-
-export async function runTrainStep(
-	session: ort.TrainingSession,
-	x: Tensor,
-	y: Tensor
-): Promise<TrainStepResult> {
-	const feeds = {
-		input: x,
-		labels: y,
-	};
-	const trainResult = await session.runTrainStep(feeds);
-	await session.runOptimizerStep();
-	await session.lazyResetGrad();
-
-	const loss = getLoss(trainResult);
-
-	return {
-		loss,
-	};
-}
-
+/**
+ *
+ * @param modelUrl URL to the inference model file.
+ * @returns A promise that resolves with the inferecence session.
+ */
+/**
+ * Creates a training session.
+ * @param trainingModelUrl URL to the training model file.
+ * @param optimizerModelUrl URL to the optimizer model file.
+ * @param evalModelUrl URL to the eval model file.
+ * @param checkpointUrl URL to the checkpoint file.
+ * @returns A promise that resolves with the training session.
+ */
 export async function createTrainingSession(
 	trainingModelUrl: string,
 	optimizerModelUrl: string,

@@ -11,6 +11,9 @@ from storage.file_storage_interface import IFileStorage
 
 @dataclass
 class FLTaskBase(ABC):
+    """
+    Holds all information and instructions for a Federated Learning task.
+    """
     id: str
     title: str
     aggregator: Literal["fedasync"]
@@ -50,6 +53,13 @@ class FLTaskBase(ABC):
         version: int,
         storage: IFileStorage
     ):
+        """
+        Handles an incoming **update** from a client, trained with the 
+        specified model **version** and applies it to the global model, 
+        using the tasks 'aggregator' algorithm.
+        Then, the model with the new parameters is saved to the storage and
+        new training artifacts are created.
+        """
         model_bytes = storage.read(self.model_file)
         model_file_path = storage.get_full_path(self.model_file)
 
@@ -58,7 +68,8 @@ class FLTaskBase(ABC):
         if self.aggregator == "fedasync":
             new_params = self.aggregate_fedasync(params, update, version)
         else:
-            raise NotImplementedError(f"Aggregator '${self.aggregator}' is not implemented")
+            raise NotImplementedError(
+                f"Aggregator '${self.aggregator}' is not implemented")
 
         model = set_parameters(
             model_bytes, new_params, self.trainable_parameter_names)

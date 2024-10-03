@@ -1,0 +1,9 @@
+{% extends 'base.html' %} {% block content %}
+  <classification-model-tester 
+    task-id="{{task.id}}"
+    classes="{{task.classes|join(',')}}"
+    model-url="/download/{{task.model_file}}"
+    input-image-size="{{task.input_size}}"
+    norm-range="{{task.norm_range[0]}},{{task.norm_range[1]}}"
+  ></classification-model-tester>
+{% endblock %}

@@ -4,6 +4,7 @@ export enum Stage {
 	Inference,
 	ReadyForTraining,
 	Trained,
+	Testing,
 }
 
 export interface ModelImage<T extends KeyValuePairs> {
@@ -31,6 +32,11 @@ export class ImageRepository {
 
 	constructor() {}
 
+	/**
+	 * Initialize the database with the given object store name.
+	 * @param objectStoreName Name of the object store to save the data to.
+	 * @returns A promise that resolves when the db has been initialized.
+	 */
 	public initializeDB(objectStoreName: string): Promise<void> {
 		this._objectStoreName = objectStoreName;
 		return new Promise((resolve, reject) => {
@@ -58,6 +64,11 @@ export class ImageRepository {
 		});
 	}
 
+	/**
+	 * Add a ModelImage to the db.
+	 * @param input The ModelImage to store.
+	 * @returns A promise that resolves with the id of the new ModelImage.
+	 */
 	addImage<T extends KeyValuePairs>(
 		input: ModelImageCreateInput<T>
 	): Promise<number> {
@@ -83,6 +94,11 @@ export class ImageRepository {
 		});
 	}
 
+	/**
+	 * Gets a ModelImage from the db.
+	 * @param id The id of the ModelImage.
+	 * @returns A promise that resolves with the ModelImages data.
+	 */
 	getImage<T extends KeyValuePairs>(
 		id: number
 	): Promise<ModelImage<T> | undefined> {
@@ -108,6 +124,11 @@ export class ImageRepository {
 		});
 	}
 
+	/**
+	 * Gets ModelImages from a list of ids.
+	 * @param ids The ids of the ModelImages to retrieve from the db.
+	 * @returns A promise that resolves with an array of ModelImages.
+	 */
 	public getImagesByIds<T extends KeyValuePairs>(
 		ids: number[]
 	): Promise<(ModelImage<T> | undefined)[]> {
@@ -145,6 +166,12 @@ export class ImageRepository {
 		});
 	}
 
+	/**
+	 * Gets all ModelImage ids in the db. If stage is provided, only gets those
+	 * in that specific stage.
+	 * @param stage (optional) The Stage to filter for.
+	 * @returns A promise that resolves with the retrieved ids.
+	 */
 	getAllIds(stage?: Stage): Promise<number[]> {
 		return new Promise((resolve, reject) => {
 			if (!this.db) {
@@ -176,6 +203,13 @@ export class ImageRepository {
 		});
 	}
 
+	/**
+	 * Updates a ModelImage. Any props not provided in the input
+	 * will be unchanged in the existing ModelImage.
+	 * @param id Id of the ModelImage to update.
+	 * @param input Update for the ModelImage
+	 * @returns A promise that resolves when the ModelImage was updated.
+	 */
 	updateImageData<T extends KeyValuePairs>(
 		id: number,
 		input: ModelImageUpdateInput<T>
@@ -219,6 +253,11 @@ export class ImageRepository {
 		});
 	}
 
+	/**
+	 * Deletes a ModelImage from the db.
+	 * @param id The id of the ModelImage to be deleted.
+	 * @returns A promise that resolves when the ModelImage is deleted.
+	 */
 	deleteImage(id: number): Promise<void> {
 		return new Promise((resolve, reject) => {
 			if (!this.db) {
@@ -242,7 +281,15 @@ export class ImageRepository {
 		});
 	}
 
-	getAllImages<T extends KeyValuePairs>(): Promise<ModelImage<T>[]> {
+	/**
+	 * Gets all ModelImages in the db. If stage is provided, only gets those
+	 * in that specific stage.
+	 * @param stage (optional) The Stage to filter for.
+	 * @returns A promise that resolves with the retrieved ModelImages.
+	 */
+	getAllImages<T extends KeyValuePairs>(
+		stage?: Stage
+	): Promise<ModelImage<T>[]> {
 		return new Promise((resolve, reject) => {
 			if (!this.db) {
 				return reject("Database not initialized");
@@ -253,7 +300,14 @@ export class ImageRepository {
 				"readonly"
 			);
 			const objectStore = transaction.objectStore(this.objectStoreName);
-			const request = objectStore.getAll();
+			let request = undefined;
+			if (stage !== undefined) {
+				const index = objectStore.index("stage");
+				const query = IDBKeyRange.only(stage);
+				request = index.getAll(query);
+			} else {
+				request = objectStore.getAll();
+			}
 
 			request.onsuccess = () => {
 				resolve(request.result as ModelImage<T>[]);

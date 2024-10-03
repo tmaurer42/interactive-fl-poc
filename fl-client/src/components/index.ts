@@ -3,6 +3,7 @@ import {
 	ClassificationTrainerModal,
 	ClassificationDatasetDisplay,
 	ImageClassificationCard,
+	ClassificationModelTester,
 } from "./imageClassification";
 
 export const registerComponents = () => {
@@ -19,4 +20,9 @@ export const registerComponents = () => {
 		"classification-dataset-display",
 		ClassificationDatasetDisplay
 	);
+	window.customElements.define(
+		"classification-model-tester",
+		ClassificationModelTester
+	);
+	window;
 };

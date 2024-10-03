@@ -1,19 +1,16 @@
-import ort, { InferenceSession } from "onnxruntime-web";
 import {
 	createInferenceSession,
 	hasRequiredAttributes,
-	runInference,
-} from "modules";
-import {
 	ImageRepository,
 	KeyValuePairs,
 	ModelImage,
 	ModelImageUpdateInput,
 	Repository,
 	Stage,
-} from "modules/ImageRepository";
+} from "modules";
+import ort from "onnxruntime-web";
 
-type InferenceInput<T extends KeyValuePairs> = {
+export type InferenceInput<T extends KeyValuePairs> = {
 	id: number;
 	imgElement: HTMLImageElement;
 	modelImage: ModelImage<T>;
@@ -25,16 +22,12 @@ export abstract class VisionModelTrainerBase<
 > extends HTMLElement {
 	private taskIdAttribute = "task-id";
 	private modelUrlAttribute = "model-url";
-	private inputImageSizeAttribute = "input-image-size";
-	private normRangeAtribute = "norm-range";
 
 	private modelUrl: string = "";
-	private inputImageSize: number = 224;
-	private normRange: [number, number] = [-1, 1];
 
 	private repository: ImageRepository;
 	private modelImageIds: number[] = [];
-	private columnSize: number = 12;
+	private columnSize: number = 10;
 
 	constructor() {
 		super();
@@ -50,22 +43,10 @@ export abstract class VisionModelTrainerBase<
 		onImageLoaded: (imgElement: HTMLImageElement) => void
 	): void;
 
-	protected abstract updatePredictionResult(
-		container: Pick<HTMLDivElement, "querySelector">,
-		imageId: number,
-		predicitonResult: any
-	): void;
-
-	protected abstract updateInferenceLoading(
-		container: Pick<HTMLDivElement, "querySelector">,
-		imageId: number,
-		message: string
-	): void;
-
-	protected abstract modelOutputsToPredictionResult(
-		outputs: ort.InferenceSession.OnnxValueMapType,
-		session: InferenceSession
-	): TPredictionResult;
+	protected abstract runInference(
+		session: ort.InferenceSession,
+		inferenceInput: InferenceInput<TPredictionResult>[]
+	): Promise<void>;
 
 	protected async updateImageData(
 		id: number,
@@ -90,10 +71,10 @@ export abstract class VisionModelTrainerBase<
 			"#startTrainButton"
 		) as HTMLButtonElement;
 
-		const images = await this.repository.getAllImages();
-		const inProgress = images.filter(
-			(img) => img.stage === Stage.ReadyForTraining
-		).length;
+		const imagesReady = await this.repository.getAllImages(
+			Stage.ReadyForTraining
+		);
+		const inProgress = imagesReady.length;
 		const total = this.modelImageIds.length;
 		progressElement.value = inProgress;
 		progressElement.max = total;
@@ -118,8 +99,6 @@ export abstract class VisionModelTrainerBase<
 			!hasRequiredAttributes(this, [
 				this.taskIdAttribute,
 				this.modelUrlAttribute,
-				this.inputImageSizeAttribute,
-				this.normRangeAtribute,
 			])
 		) {
 			this.innerHTML = "";
@@ -127,14 +106,6 @@ export abstract class VisionModelTrainerBase<
 		}
 
 		this.modelUrl = this.getAttribute(this.modelUrlAttribute)!;
-		this.inputImageSize = parseInt(
-			this.getAttribute(this.inputImageSizeAttribute)!
-		);
-		const normRangeStr = this.getAttribute(this.normRangeAtribute)!;
-		this.normRange = normRangeStr.split(",").map((n) => parseInt(n)) as [
-			number,
-			number
-		];
 
 		this.innerHTML = this.render();
 		this.bindEvents();
@@ -245,37 +216,11 @@ export abstract class VisionModelTrainerBase<
 		);
 
 		this.updateProgressDisplay();
-		await this.runInference(renderedImages);
-	}
-
-	private async runInference(
-		inferenceInput: InferenceInput<TPredictionResult>[]
-	) {
 		const inferenceSession = await createInferenceSession(this.modelUrl);
-		for (const input of inferenceInput) {
-			const { imgElement, id, modelImage, container } = input;
-			if (!modelImage.predictionResult) {
-				this.updateInferenceLoading(
-					container,
-					id,
-					"Running Inference..."
-				);
-				const outputs = await runInference(
-					inferenceSession,
-					imgElement,
-					this.inputImageSize,
-					this.normRange
-				);
-				const predictionResult = this.modelOutputsToPredictionResult(
-					outputs,
-					inferenceSession
-				);
-				await this.updateImageData(id, {
-					predictionResult,
-				});
-				this.updatePredictionResult(container, id, predictionResult);
-			}
-		}
+		await this.runInference(
+			inferenceSession,
+			renderedImages.filter((img) => !img.modelImage.predictionResult)
+		);
 		await inferenceSession.release();
 	}
 
