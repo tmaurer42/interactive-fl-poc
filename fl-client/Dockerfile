@@ -41,7 +41,6 @@ USER appuser
 
 # Keeps Python from generating .pyc files in the container / Turns off buffering for easier container logging
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-# PATH=$PATH:/home/appuser/.local/bin
 
 EXPOSE 4002
 

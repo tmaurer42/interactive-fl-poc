@@ -98,7 +98,7 @@ export abstract class VisionDatasetDisplayBase<
 		return `
             <div>
 				${this.renderHeader()}
-                <div class="block" style="height:calc(100vh - 270px);overflow-y:scroll">
+                <div class="block" style="height:calc(100vh - 250px);overflow-y:scroll">
                     <div class="grid is-col-min-${
 						this.columnSize
 					}" id="imageContainer" />

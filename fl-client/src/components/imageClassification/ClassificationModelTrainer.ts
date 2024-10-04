@@ -13,7 +13,7 @@ import {
 	VisionModelTrainerBase,
 } from "../base/VisionModelTrainerBase";
 import { ClassificationResult } from "./ClassificationResult";
-import { ImageClassificationCard } from "./ImageCard";
+import { ImageClassificationCard } from "./ImageClassificationCard";
 
 export class ClassificationModelTrainer extends VisionModelTrainerBase<ClassificationResult> {
 	private classesAttribute = "classes";

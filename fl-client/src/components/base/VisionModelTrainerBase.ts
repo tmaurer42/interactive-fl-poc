@@ -283,7 +283,7 @@ export abstract class VisionModelTrainerBase<
 						</div>
 					</div>
 				</div>
-                <div class="block" style="height:calc(100vh - 320px);overflow-y:scroll">
+                <div class="block" style="height:calc(100vh - 280px);overflow-y:scroll">
                     <div class="grid is-col-min-${this.columnSize}" id="imageContainer" />
                 </div>
             </div>

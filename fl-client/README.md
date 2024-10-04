@@ -7,11 +7,11 @@ This is the client application for interactive federated machine learning.
 - Docker
 - Node Version >= 20
 - Yarn
-- Python > 3.12 for development
+- Python >= 3.12 for development
 
 ## Start / Debug Client
 
-Create a virtual Python environment with version > 3.12 and install the requirements.
+Create a virtual Python environment with version >= 3.12 and install the requirements.
 
 Run `yarn install`
 

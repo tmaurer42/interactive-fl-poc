@@ -1,4 +1,9 @@
-import { hasRequiredAttributes, ImageRepository, Repository } from "modules";
+import {
+	hasRequiredAttributes,
+	ImageRepository,
+	Repository,
+	Stage,
+} from "modules";
 
 type VisionTrainerModalBaseProps = {
 	taskId: string;
@@ -104,13 +109,15 @@ export abstract class VisionTrainerModalBase<TProps> extends HTMLElement {
 				"#trainer-modal"
 			) as HTMLDivElement;
 			if (this.hasAttribute(this.isActiveAttribute)) {
-				this.repository.getAllIds().then((ids) => {
-					const numImagesSpan = this.querySelector(
-						"#num-images"
-					) as HTMLSpanElement;
-					numImagesSpan.innerText = ids.length.toString();
-					modal.classList.add("is-active");
-				});
+				this.repository
+					.getAllIds(Stage.ReadyForTraining)
+					.then((ids) => {
+						const numImagesSpan = this.querySelector(
+							"#num-images"
+						) as HTMLSpanElement;
+						numImagesSpan.innerText = ids.length.toString();
+						modal.classList.add("is-active");
+					});
 			} else {
 				modal.classList.remove("is-active");
 			}
@@ -195,7 +202,6 @@ export abstract class VisionTrainerModalBase<TProps> extends HTMLElement {
 		const { taskId, modelVersion } = this.properties;
 		const update = Array.from(newParams);
 
-		console.log(update);
 		const data = {
 			task_id: taskId,
 			update: update,

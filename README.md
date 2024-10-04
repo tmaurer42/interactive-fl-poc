@@ -9,7 +9,7 @@ This project is optimized for development in Visual Studio Code. Open the the wo
 ## Prerequisites
 
 - Docker
-- Python > 3.12 for development
+- Python >= 3.12 for development
 
 ## Run Application
 

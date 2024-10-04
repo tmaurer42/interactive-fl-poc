@@ -3,6 +3,7 @@ version: "3.4"
 services:
   fl-server:
     image: fl-server
+    platform: linux/amd64
     build:
       context: ./fl-server
       dockerfile: Dockerfile

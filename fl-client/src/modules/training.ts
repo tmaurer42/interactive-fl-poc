@@ -20,8 +20,6 @@ export async function createTrainingSession(
 	evalModelUrl: string,
 	checkpointUrl: string
 ): Promise<ort.TrainingSession> {
-	console.log("Attempting to load training session...");
-
 	const trainModel = await fetchAsUint8Array(trainingModelUrl);
 	const optimizerModel = await fetchAsUint8Array(optimizerModelUrl);
 	const evalModel = await fetchAsUint8Array(evalModelUrl);

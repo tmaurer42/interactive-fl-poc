@@ -112,10 +112,8 @@ export class ClassificationTrainerModal extends VisionTrainerModalBase<Classific
 				);
 				const y = new Tensor("int64", labels);
 
-				console.log(trainingSession.trainingInputNames);
-				console.log(trainingSession.trainingOutputNames);
 				const inputName = trainingSession.trainingInputNames[0];
-				const labelsName = trainingSession.trainingInputNames[2];
+				const labelsName = trainingSession.trainingInputNames[1];
 
 				const feeds = {
 					[inputName]: x,
@@ -125,8 +123,11 @@ export class ClassificationTrainerModal extends VisionTrainerModalBase<Classific
 				const result = await trainingSession.runTrainStep(feeds);
 				const lossName = trainingSession.trainingOutputNames[0];
 				const loss = result[lossName].data;
-
 				runningLoss += loss * (images.length / trainIds.length);
+
+				await trainingSession.runOptimizerStep();
+				await trainingSession.lazyResetGrad();
+
 				numBatches += 1;
 			}
 
