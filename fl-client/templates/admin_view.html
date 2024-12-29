@@ -1,0 +1,136 @@
+{% extends 'base.html' %} {% block content %}
+<div class="block" style="max-width: 1074px;">
+    <div id="configuration-form-success" class="notification is-success is-hidden">
+        <button class="delete"></button>
+        Configuration updated successfully!
+    </div>
+    <h1 class="title">Model Configuration Form</h1>
+    <form id="fl-task-form" onsubmit="submitForm(event)">
+        <div class="columns">
+            <div class="column">
+                <div class="field">
+                    <label class="label">Title</label>
+                    <div class="control">
+                        <input value="{{task.title}}" class="input" type="text" placeholder="Enter title" name="title"
+                            required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Model</label>
+                    <div class="control">
+                        <div class="select">
+                            <select name="model" required>
+                                {% for model in models %}
+                                <option value="{{ model }}" {% if task.model==model %}selected{% endif %}>
+                                    {{ model }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Aggregator</label>
+                    <div class="control">
+                        <div class="select">
+                            <select name="aggregator" required>
+                                {% for aggregator in aggregators %}
+                                <option value="{{ aggregator }}" {% if task.aggregator==aggregator %}selected{% endif
+                                    %}>
+                                    {{ aggregator }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Classes (Comma-Separated list of strings, no spaces)</label>
+                    <div class="control">
+                        <input value="{{task.classes | join(',')}}" class="input" type="text"
+                            placeholder="Enter classes, separated by commas" name="classes"
+                            pattern="^[a-zA-Z]+(,[a-zA-Z]+)*$">
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                {% if task.aggregator == "fedasync" %}
+                <div class="field">
+                    <label class="label">Mixing Parameter</label>
+                    <div class="control">
+                        <input value="{{task.aggregator_params.mixing_param}}" class="input" type="number" step="0.01"
+                            min="0" max="1" placeholder="Enter a value between 0 and 1" name="mixing_param" required>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="field">
+                    <label class="label">Batch Size</label>
+                    <div class="control">
+                        <input value="{{task.batch_size}}" class="input" type="number" min="1"
+                            placeholder="Enter batch size" name="batch_size" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Local Epochs</label>
+                    <div class="control">
+                        <input value="{{task.local_epochs}}" class="input" type="number" min="1"
+                            placeholder="Enter local epochs" name="local_epochs" required>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+        <div class="field">
+            <div class="control">
+                <button class="button is-primary" type="submit">Submit</button>
+            </div>
+        </div>
+    </form>
+    <script>
+        function submitForm(event) {
+            event.preventDefault();
+
+            const form = document.getElementById('fl-task-form');
+            const formData = new FormData(form);
+            const jsonData = {};
+
+            formData.forEach((value, key) => {
+                switch (key) {
+                    case 'mixing_param': value = parseFloat(value); break;
+                    case 'batch_size': value = parseInt(value); break;
+                    case 'local_epochs': value = parseInt(value); break;
+                    case 'classes': value = value.split(',').map(c => c.trim()); break;
+                    default: { }
+                }
+                jsonData[key] = value;
+            });
+
+            console.log(JSON.stringify(jsonData));
+
+            fetch('/admin/tasks/{{task.id}}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            })
+                .then(() => {
+                    const notification = document.querySelector("#configuration-form-success")
+                    notification.classList.remove("is-hidden")
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(`Error submitting form: ${error}`);
+                });
+
+            return false;
+        }
+    </script>
+</div>
+{% endblock %}

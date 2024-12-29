@@ -169,10 +169,11 @@ export class ClassificationModelTester extends VisionDatasetDisplayBase<Classifi
 
 		const inferenceSession = await createInferenceSession(this.modelUrl);
 
-		const correctIds: number[] = [];
-		const incorrectIds: number[] = [];
 		let idIndex = 0;
 		let batchNo = 1;
+
+		const correctImages: { id: number; prediction: string }[] = [];
+		const incorrectImages: { id: number; prediction: string }[] = [];
 
 		for (const batch of batches) {
 			this.updateTestProgressMessage(
@@ -215,9 +216,15 @@ export class ClassificationModelTester extends VisionDatasetDisplayBase<Classifi
 				const actualLabel = image.predictionResult?.label!;
 
 				if (predictedLabel === actualLabel) {
-					correctIds.push(testIds[idIndex]);
+					correctImages.push({
+						id: testIds[idIndex],
+						prediction: predictedLabel,
+					});
 				} else {
-					incorrectIds.push(testIds[idIndex]);
+					incorrectImages.push({
+						id: testIds[idIndex],
+						prediction: predictedLabel,
+					});
 				}
 
 				idIndex += 1;
@@ -228,25 +235,27 @@ export class ClassificationModelTester extends VisionDatasetDisplayBase<Classifi
 
 		inferenceSession.release();
 
-		for (const id of correctIds) {
+		for (const { id, prediction } of correctImages) {
 			const labelElement = this.querySelector(
-				`#image-label-${id}`
+				`#image-predicted-label-${id}`
 			) as HTMLSpanElement;
 			labelElement.classList.add("has-text-success");
+			labelElement.innerText = prediction;
 		}
 
-		for (const id of incorrectIds) {
+		for (const { id, prediction } of incorrectImages) {
 			const labelElement = this.querySelector(
-				`#image-label-${id}`
+				`#image-predicted-label-${id}`
 			) as HTMLSpanElement;
 			labelElement.classList.add("has-text-danger");
+			labelElement.innerText = prediction;
 		}
 
-		const acc = (correctIds.length / testIds.length) * 100;
+		const acc = (correctImages.length / testIds.length) * 100;
 		this.updateTestProgressMessage(
 			`Accuracy: ${acc.toFixed(2)} % (Correct: ${
-				correctIds.length
-			}, Incorrect: ${incorrectIds.length})`
+				correctImages.length
+			}, Incorrect: ${incorrectImages.length})`
 		);
 		this.onTestEnd();
 	}
@@ -289,6 +298,11 @@ export class ClassificationModelTester extends VisionDatasetDisplayBase<Classifi
 					<label class="card-footer-item">
 						<strong>
 							<span id="image-label-${imageId}">${label}</span>
+						</strong>
+					</label>
+					<label class="card-footer-item">
+						<strong>
+							<span id="image-predicted-label-${imageId}"></span>
 						</strong>
 					</label>
                 </footer>

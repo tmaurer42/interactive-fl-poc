@@ -5,9 +5,11 @@ from typing import Literal
 import onnx
 
 from ml import onnx_utils
+from ml.ml_models import MLModel
 from ml.onnx_utils import get_parameters, set_parameters
 from storage.file_storage_interface import IFileStorage
 
+Aggregator = Literal["fedasync"]
 
 @dataclass
 class FLTaskBase(ABC):
@@ -16,7 +18,8 @@ class FLTaskBase(ABC):
     """
     id: str
     title: str
-    aggregator: Literal["fedasync"]
+    model: MLModel
+    aggregator: Aggregator
     aggregator_params: dict[str, any]
 
     model_file: str
@@ -28,9 +31,12 @@ class FLTaskBase(ABC):
     batch_size: int
     local_epochs: int
 
-    model_version: int
+    model_version: int = field(init=False, default=0)
     trainable_parameter_names: list[str] = field(
         init=False, default_factory=list)
+
+    def __post_init__(self):
+        self.model_version = 0
 
     def aggregate_fedasync(
         self,
@@ -79,7 +85,6 @@ class FLTaskBase(ABC):
             self.trainable_parameter_names, model_file_path)
 
         self.model_version += 1
-
 
 @dataclass
 class ClassificationFLTask(FLTaskBase):

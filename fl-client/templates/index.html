@@ -1,13 +1,50 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <div class="block">
-    Here we can check if ONNX Runtime Web is working correctly.
-  </div>
-   <div class="block">
-      <a class="button is-primary" onclick="ensureOnnxRuntime()">Test inference session!</a>
-   </div>
-   <div class="block">
-    <p>See console for result.</p>
-  </div>
+<div class="block content">
+  <p>Here we can check if ONNX Runtime Web is working correctly.</p>
+  <p>See console for result.</p>
+</div>
+<div class="block">
+  <a class="button is-primary" onclick="ensureOnnxRuntime()">Test inference session!</a>
+</div>
+<div class="block content">
+  <h3 class="title">Current Model Configuration</h3>
+  <table>
+    <tbody>
+      <tr>
+        <td>Task ID</td>
+        <td>{{ task.id }}</td>
+      </tr>
+      <tr>
+        <td>Title</td>
+        <td>{{ task.title }}</td>
+      </tr>
+      <tr>
+        <td>Model</td>
+        <td>{{ task.model }}</td>
+      </tr>
+      <tr>
+        <td>Aggregator</td>
+        <td>{{ task.aggregator }}</td>
+      </tr>
+      <tr>
+        <td>Model Version</td>
+        <td>{{ task.model_version }}</td>
+      </tr>
+      <tr>
+        <td>Classes</td>
+        <td>{{ task.classes|join(', ') }}</td>
+      </tr>
+      <tr>
+        <td>Number of Epochs</td>
+        <td>{{ task.local_epochs }}</td>
+      </tr>
+      <tr>
+        <td>Batch Size</td>
+        <td>{{ task.batch_size }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 {% endblock %}

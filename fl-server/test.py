@@ -5,26 +5,26 @@ import torch
 import numpy as np
 
 def main():
-    eval_model = onnx.load("__file_storage__/models/mobilenet_pretrained_demo/eval_model.onnx")
+    eval_model = onnx.load("__file_storage__/models/demo_task/eval_model.onnx")
     for node in eval_model.graph.node:
         if node.op_type == "BatchNormalization":
             del node.output[1:]
-    onnx.save(eval_model, "__file_storage__/models/mobilenet_pretrained_demo/eval_model.onnx")
+    onnx.save(eval_model, "__file_storage__/models/demo_task/eval_model.onnx")
 
-    state = CheckpointState.load_checkpoint("__file_storage__/models/mobilenet_pretrained_demo/checkpoint")
+    state = CheckpointState.load_checkpoint("__file_storage__/models/demo_task/checkpoint")
 
     # Create module.
-    model = Module("__file_storage__/models/mobilenet_pretrained_demo/training_model.onnx", state, "__file_storage__/models/mobilenet_pretrained_demo/eval_model.onnx")
+    model = Module("__file_storage__/models/demo_task/training_model.onnx", state, "__file_storage__/models/demo_task/eval_model.onnx")
     # Create optimizer.
-    optimizer = Optimizer("__file_storage__/models/mobilenet_pretrained_demo/optimizer_model.onnx", model)
+    optimizer = Optimizer("__file_storage__/models/demo_task/optimizer_model.onnx", model)
     optimizer.set_learning_rate(0.1)
-    state.save_checkpoint(model._state, "__file_storage__/models/mobilenet_pretrained_demo/checkpoint", include_optimizer_state=True)
+    state.save_checkpoint(model._state, "__file_storage__/models/demo_task/checkpoint", include_optimizer_state=True)
 
-    state = CheckpointState.load_checkpoint("__file_storage__/models/mobilenet_pretrained_demo/checkpoint")
+    state = CheckpointState.load_checkpoint("__file_storage__/models/demo_task/checkpoint")
     # Create module.
-    model = Module("__file_storage__/models/mobilenet_pretrained_demo/training_model.onnx", state, "__file_storage__/models/mobilenet_pretrained_demo/eval_model.onnx")
+    model = Module("__file_storage__/models/demo_task/training_model.onnx", state, "__file_storage__/models/demo_task/eval_model.onnx")
     # Create optimizer.
-    optimizer = Optimizer("__file_storage__/models/mobilenet_pretrained_demo/optimizer_model.onnx", model)
+    optimizer = Optimizer("__file_storage__/models/demo_task/optimizer_model.onnx", model)
     lr = optimizer.get_learning_rate()
 
     model.train()

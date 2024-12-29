@@ -3,7 +3,7 @@ import io
 from mimetypes import guess_type
 
 import requests
-from flask import Flask, jsonify, make_response, render_template, request, send_file, send_from_directory
+from flask import Flask, jsonify, make_response, render_template, request, send_file, send_from_directory, redirect
 
 
 app = Flask(__name__)
@@ -16,12 +16,16 @@ config = cfg_parser['DEFAULT']
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    task_id = "demo_task"
+    resp = requests.get(f"{config['ServerUrl']}/api/tasks/{task_id}")
+    task = resp.json()
+
+    return render_template('index.html',  task=task)
 
 
 @app.route('/train-model')
 def train_model_get():
-    task_id = "mobilenet_pretrained_demo"
+    task_id = "demo_task"
     resp = requests.get(f"{config['ServerUrl']}/api/tasks/{task_id}")
     task = resp.json()
 
@@ -52,7 +56,7 @@ def train_model_post():
 
 @app.route('/my_dataset')
 def my_dataset_get():
-    task_id = "mobilenet_pretrained_demo"
+    task_id = "demo_task"
     resp = requests.get(f"{config['ServerUrl']}/api/tasks/{task_id}")
     task = resp.json()
 
@@ -61,11 +65,39 @@ def my_dataset_get():
 
 @app.route('/test-model')
 def test_model_get():
-    task_id = "mobilenet_pretrained_demo"
+    task_id = "demo_task"
     resp = requests.get(f"{config['ServerUrl']}/api/tasks/{task_id}")
     task = resp.json()
 
     return render_template('test_model.html', task=task)
+
+
+@app.route('/admin/tasks/<task_id>')
+def admin_view(task_id):
+    task_resp = requests.get(f"{config['ServerUrl']}/api/tasks/{task_id}")
+    task = task_resp.json()
+
+    metadata_resp = requests.get(f"{config['ServerUrl']}/api/metadata")
+    metadata = metadata_resp.json()
+
+    return render_template(
+        'admin_view.html', 
+        task=task,
+        models=metadata['models'],
+        aggregators=metadata['aggregators']
+    )
+
+
+@app.route('/admin/tasks/<task_id>', methods=['POST'])
+def admin_post(task_id):
+    task = request.get_json()
+    
+    server_url = f"{config['ServerUrl']}/api/tasks/{task_id}"
+    resp = requests.patch(url=server_url, json={'task': task})
+    print(resp.status_code)
+    print(resp.text)
+
+    return redirect(f'/admin/tasks/{task_id}')
 
 
 @app.route('/static/<path:path>')
