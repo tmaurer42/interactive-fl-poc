@@ -15,4 +15,7 @@ services:
       context: ./fl-client
       dockerfile: Dockerfile
     ports:
+      # Multiple clients: 
+      # docker compose up --build --scale fl-client=4
+      # - 4002-4005:4002
       - 4002:4002
