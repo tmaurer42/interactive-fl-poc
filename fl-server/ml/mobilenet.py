@@ -3,7 +3,7 @@ from torchvision import models
 
 def get_mobilenet(
     num_classes: int,
-    transfer_learning: bool = False,
+    transfer_learning: bool = True,
     dropout=0.2,
 ) -> models.MobileNetV2:
     """

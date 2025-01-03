@@ -6,9 +6,7 @@ MLModel = Literal["MobileNetV2"]
 
 def get_ml_model(
     kind: MLModel, 
-    num_classes: int, 
-    transfer_learning: bool, 
-    dropout: float = 0.0
+    num_classes: int,
 ):
     if kind == "MobileNetV2":
-        return get_mobilenet(num_classes, transfer_learning, dropout)
+        return get_mobilenet(num_classes)

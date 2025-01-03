@@ -22,11 +22,11 @@ class FLTaskBase(ABC):
     aggregator: Aggregator
     aggregator_params: dict[str, any]
 
-    model_file: str
-    training_file: str
-    optimizer_file: str
-    eval_file: str
-    checkpoint_file: str
+    model_file: str = field(init=False, default="")
+    training_file: str = field(init=False, default="")
+    optimizer_file: str = field(init=False, default="")
+    eval_file: str = field(init=False, default="")
+    checkpoint_file: str = field(init=False, default="")
 
     batch_size: int
     local_epochs: int

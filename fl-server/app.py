@@ -25,42 +25,43 @@ repository = InMemoryRepository[FLTaskBase]()
 
 tasks: dict[str, FLTaskBase] = {}
 
-demo_model_id = 'demo_task'
-demo_model_dir_internal = os.path.join(
-    '__file_storage__',
-    'models',
-    demo_model_id
-)
-mobilenet = get_ml_model('MobileNetV2',
-    num_classes=2, transfer_learning=True, dropout=0.2)
-trainable_param_names = [name for name,
-                         p in mobilenet.named_parameters() if p.requires_grad]
+def initialize_model(task: FLTaskBase, **model_args):
+    model_dir = os.path.join(
+        'models',
+        task.id
+    )
+    model = get_ml_model(task.model, **model_args)
+    trainable_param_names = [name for name,
+                         p in model.named_parameters() if p.requires_grad]
 
-if not os.path.exists(demo_model_dir_internal):
+    task.trainable_parameter_names = trainable_param_names
+    task.model_file = os.path.join(model_dir, "model.onnx")
+    task.training_file = os.path.join(model_dir, "training_model.onnx")
+    task.optimizer_file = os.path.join(model_dir, "optimizer_model.onnx")
+    task.eval_file = os.path.join(model_dir, "eval_model.onnx")
+    task.checkpoint_file = os.path.join(model_dir, "checkpoint")
+
     model_to_onnx(
-        model=mobilenet,
-        model_directory=demo_model_dir_internal
+        model=model,
+        model_directory=os.path.join('__file_storage__', model_dir)
     )
 
-demo_model_dir = os.path.join('models', demo_model_id)
+
+demo_model_id = 'demo_task'
+
 task = ClassificationFLTask(
-    id='demo_task',
+    id=demo_model_id,
     title='Task for demonstration',
     model='MobileNetV2',
     aggregator="fedasync",
     aggregator_params={'mixing_param': 0.5},
     classes=["Cat", "Dog"],
-    model_file=os.path.join(demo_model_dir, "model.onnx"),
-    training_file=os.path.join(demo_model_dir, "training_model.onnx"),
-    optimizer_file=os.path.join(demo_model_dir, "optimizer_model.onnx"),
-    eval_file=os.path.join(demo_model_dir, "eval_model.onnx"),
-    checkpoint_file=os.path.join(demo_model_dir, "checkpoint"),
     local_epochs=10,
     batch_size=16,
     input_size=224,
     norm_range=[-1, 1]
 )
-task.trainable_parameter_names = trainable_param_names
+initialize_model(task, num_classes=2)
 repository.create(demo_model_id, task)
 
 
@@ -114,7 +115,7 @@ def update_task(task_id):
     if task_update is None:
         return {'message': 'No "task" provided in request body'}, 400
 
-    task = repository.get(task_id)
+    task: FLTaskBase = repository.get(task_id)
     if task is None:
         return {'message': 'Task not found'}, 404
 
@@ -124,8 +125,10 @@ def update_task(task_id):
         elif key in task.aggregator_params:
             task.aggregator_params[key] = value
 
-    print(task)
+    task.model_version = 0
+
     repository.update(task_id, task)
+    initialize_model(task, num_classes=len(task.classes))
 
     return {'message': f'Task with id {task_id} updated successfully'}, 200
 
@@ -137,7 +140,7 @@ def update_model():
     update = request.json['update']
     model_version = request.json['model_version']
 
-    task = tasks.get(task_id, None)
+    task: FLTaskBase = repository.get(task_id)
     if task is None:
         return {'message': 'Task with id {taskId} not found'}, 404
 
@@ -147,7 +150,9 @@ def update_model():
         storage,
     )
 
-    return {'message': f'Model for task update received'}
+    repository.update(task_id, task)
+
+    return {'message': f'Model for task update received'}, 200
 
 
 port = 5002
