@@ -1,4 +1,4 @@
-# FL POC
+# InFL-UX: A Toolkit for Web-Based Interactive Federated Learning
 
 This is a proof of concept application for interactive federated machine learning.
 
